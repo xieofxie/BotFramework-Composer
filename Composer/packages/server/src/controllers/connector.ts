@@ -3,7 +3,6 @@
 
 import { BotEnvironments } from '../models/connector';
 import { EnvironmentProvider } from '../models/environment';
-
 async function connect(req: any, res: any) {
   try {
     const hostName = req.hostname;
@@ -42,6 +41,18 @@ async function sync(req: any, res: any) {
   }
 }
 
+function disconnect(req: any, res: any) {
+  try {
+    const environment = EnvironmentProvider.getCurrent();
+    environment.getBotConnector().disconnect();
+    res.send('OK');
+  } catch (error) {
+    res.status(400).json({
+      message: error instanceof Error ? error.message : error,
+    });
+  }
+}
+
 async function publish(req: any, res: any) {
   try {
     const label = req.params ? req.params.label : undefined;
@@ -63,6 +74,7 @@ function status(req: any, res: any) {
 export const BotConnectorController = {
   connect: connect,
   sync: sync,
+  disconnect: disconnect,
   status: status,
   publish: publish,
   getPublishHistory: getPublishHistory,

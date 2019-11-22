@@ -69,6 +69,10 @@ export class SelfHostBotConnector implements IBotConnector {
     });
   };
 
+  public disconnect(): void {
+    return;
+  }
+
   public getEditingStatus = async (): Promise<boolean> => {
     const status = await this.getEditingStatusAsync({
       //eslint-disable-next-line @typescript-eslint/no-non-null-assertion

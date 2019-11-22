@@ -11,7 +11,7 @@ import { startBot } from './bot';
 import { navTo } from './navigation';
 import settingStorage from './../../utils/dialogSettingStorage';
 import httpClient from './../../utils/httpUtil';
-
+import { disconnectBot } from './bot';
 export const setCreationFlowStatus: ActionCreator = ({ dispatch }, creationFlowStatus) => {
   dispatch({
     type: ActionTypes.SET_CREATION_FLOW_STATUS,
@@ -100,6 +100,7 @@ export const openBotProject: ActionCreator = async (store, absolutePath) => {
 
 export const saveProjectAs: ActionCreator = async (store, name, description) => {
   //set storageId = 'default' now. Some other storages will be added later.
+
   const storageId = 'default';
   try {
     const data = {

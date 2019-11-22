@@ -39,6 +39,7 @@ router.get('/storages/:storageId/blobs/:path(*)', StorageController.getBlob);
 // connector
 router.get('/launcher/connect', BotConnectorController.connect);
 router.post('/launcher/sync', BotConnectorController.sync);
+router.get('launcher/disconnect', BotConnectorController.disconnect);
 router.get('/launcher/status', BotConnectorController.status);
 router.get('/launcher/publishHistory', BotConnectorController.getPublishHistory);
 router.post('/launcher/publish', BotConnectorController.publish);

@@ -27,6 +27,23 @@ export const connectBot: ActionCreator = async (store, settings) => {
   await reloadBot(store, settings);
 };
 
+export const disconnectBot: ActionCreator = async store => {
+  const state = store.getState();
+  const { botEnvironment } = state;
+  const path = `/launcher/disconnect?botEnvironment=${botEnvironment}`;
+  try {
+    await httpClient.get(path);
+    store.dispatch({
+      type: ActionTypes.DISCONNECT_BOT_SUCCESS,
+      payload: {
+        status: 'unconnected',
+      },
+    });
+  } catch (err) {
+    throw new Error(err.response.data.message);
+  }
+};
+
 // return only the connect URL -- do not reload
 export const getConnect: ActionCreator = async (store, env) => {
   const state = store.getState();

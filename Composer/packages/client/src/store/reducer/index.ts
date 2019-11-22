@@ -311,6 +311,7 @@ export const reducer = createReducer({
   [ActionTypes.PUBLISH_LU_SUCCCESS]: updateLuTemplate,
   [ActionTypes.CONNECT_BOT_SUCCESS]: setBotStatus,
   [ActionTypes.RELOAD_BOT_SUCCESS]: setBotLoadErrorMsg,
+  [ActionTypes.DISCONNECT_BOT_SUCCESS]: setBotStatus,
   // [ActionTypes.RELOAD_BOT_FAILURE]: setBotLoadErrorMsg,
   [ActionTypes.SET_ERROR]: setError,
   [ActionTypes.SET_DESIGN_PAGE_LOCATION]: setDesignPageLocation,

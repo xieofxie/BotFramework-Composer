@@ -48,6 +48,10 @@ export class MockHostBotConnector implements IBotConnector {
     return Promise.resolve();
   };
 
+  public disconnect(): void {
+    return;
+  }
+
   public getEditingStatus = async (): Promise<boolean> => {
     return Promise.resolve(false);
   };
