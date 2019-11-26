@@ -2,12 +2,15 @@
 // Licensed under the MIT License.
 
 import { ChildProcess, spawn } from 'child_process';
+
+import { Path } from '../../utility/path';
+import { DialogSetting } from '../bot/interface';
+
 interface BotsList {
   [key: string]: ChildProcess;
 }
 class BotManager {
   bots: BotsList = {};
-  // startPort = 4000;
   constructor() {
     process.on('SIGINT', () => {
       console.log('[SIGINT] start graceful shutdown');
@@ -25,9 +28,16 @@ class BotManager {
       process.exit(1);
     });
   }
+
   private buildProcess = async (dir: string): Promise<number | null> => {
     return new Promise((resolve, reject) => {
-      const build = spawn('dotnet', ['build'], { cwd: dir, stdio: ['ignore', 'ignore', 'inherit'] });
+      const startScript = Path.resolve('src/models/connector/build_runtime.ps1');
+      const build = spawn(`pwsh ${startScript}`, {
+        cwd: dir,
+        detached: true,
+        shell: true,
+        stdio: ['ignore', 'ignore', 'inherit'],
+      });
       console.log(`build pid : ${build.pid}`);
 
       build.stderr &&
@@ -40,18 +50,38 @@ class BotManager {
       });
     });
   };
-  start = async (dir: string) => {
+
+  private getLuisConfig = (config: DialogSetting) => {
+    const configList: string[] = [];
+    if (config.luis && config.luis.authoringKey) {
+      configList.push('--luis:endpointKey');
+      configList.push(config.luis.authoringKey);
+    }
+    if (config.MicrosoftAppPassword) {
+      configList.push('--MicrosoftAppPassword');
+      configList.push(config.MicrosoftAppPassword);
+    }
+    if (config.luis && config.luis.authoringRegion) {
+      configList.push('--luis:endpoint');
+      configList.push(`https://${config.luis.authoringRegion}.api.cognitive.microsoft.com`);
+    }
+    return configList;
+  };
+
+  start = async (dir: string, config: DialogSetting) => {
     // if dir exists
     // const port = this.startPort + Object.keys(this.bots).length;
     // console.log(`process listening port: ${port}`);
     await this.buildProcess(dir);
-
-    // add this two args can start bot runtime in different port `--urls`, `http://localhost:${port}`
-    const child = spawn('dotnet', ['bin/Debug/netcoreapp2.1/BotProject.dll', `--urls`, `http://localhost:3979`], {
-      detached: true,
-      cwd: dir,
-      stdio: ['ignore', 'ignore', 'inherit'],
-    });
+    const child = spawn(
+      'dotnet',
+      ['bin/Debug/netcoreapp2.1/BotProject.dll', `--urls`, `http://localhost:3979`, ...this.getLuisConfig(config)],
+      {
+        detached: true,
+        cwd: dir,
+        stdio: ['ignore', 'ignore', 'inherit'],
+      }
+    );
 
     if (child.stdout !== null) {
       child.stdout.on('data', (data: any) => {

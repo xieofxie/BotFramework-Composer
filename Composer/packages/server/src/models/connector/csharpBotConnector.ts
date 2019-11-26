@@ -36,7 +36,7 @@ export class CSharpBotConnector implements IBotConnector {
         console.log('already have runtime, process running');
       } else {
         botManager.stopAll();
-        await botManager.start(dir);
+        await botManager.start(dir, config);
       }
     } catch (err) {
       botManager.stop(dir);

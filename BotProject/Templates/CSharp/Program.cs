@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -21,11 +21,14 @@ namespace Microsoft.Bot.Builder.ComposerBot.Json
             {
                 var env = hostingContext.HostingEnvironment;
                 var luisAuthoringRegion = Environment.GetEnvironmentVariable("LUIS_AUTHORING_REGION") ?? "westus";
+                var luisAuthoringEnvironment = Environment.GetEnvironmentVariable("LUIS_AUTHORING_ENVIRONMENT") ?? "composer";
                 config
                     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                     .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
                     .AddJsonFile($"luis.settings.{env.EnvironmentName}.{luisAuthoringRegion}.json", optional: true, reloadOnChange: true)
-                    .AddJsonFile($"luis.settings.{Environment.UserName}.{luisAuthoringRegion}.json", optional: true, reloadOnChange: true);
+                    .AddJsonFile($"luis.settings.{Environment.UserName}.{luisAuthoringRegion}.json", optional: true, reloadOnChange: true)
+                    .AddJsonFile($"ComposerDialogs/generated/luis.settings.{luisAuthoringEnvironment}.{luisAuthoringRegion}.json", optional: true, reloadOnChange: true)
+                    .AddJsonFile($"ComposerDialogs/settings/appsettings.json", optional: true, reloadOnChange: true);
 
                 if (env.IsDevelopment())
                 {
