@@ -9,7 +9,8 @@ import { DialogSetting } from '../bot/interface';
 interface BotsList {
   [key: string]: ChildProcess;
 }
-class BotManager {
+
+class DefaultBotConnectorManager {
   bots: BotsList = {};
   constructor() {
     process.on('SIGINT', () => {
@@ -31,7 +32,8 @@ class BotManager {
 
   private buildProcess = async (dir: string): Promise<number | null> => {
     return new Promise((resolve, reject) => {
-      const startScript = Path.resolve('src/models/connector/build_runtime.ps1');
+      const startScript = Path.resolve(__dirname, './build_runtime.ps1');
+      console.log(startScript);
       const build = spawn(`pwsh ${startScript}`, {
         cwd: dir,
         detached: true,
@@ -51,38 +53,27 @@ class BotManager {
     });
   };
 
-  private getLuisConfig = (config: DialogSetting) => {
+  private getConnectorConfig = (config: DialogSetting) => {
     const configList: string[] = [];
-    if (config.luis && config.luis.authoringKey) {
-      configList.push('--luis:endpointKey');
-      configList.push(config.luis.authoringKey);
-    }
     if (config.MicrosoftAppPassword) {
       configList.push('--MicrosoftAppPassword');
       configList.push(config.MicrosoftAppPassword);
     }
-    if (config.luis && config.luis.authoringRegion) {
-      configList.push('--luis:endpoint');
-      configList.push(`https://${config.luis.authoringRegion}.api.cognitive.microsoft.com`);
+    if (config.luis) {
+      if (config.luis.authoringKey) {
+        configList.push('--luis:endpointKey');
+        configList.push(config.luis.authoringKey);
+      }
+      if (config.luis.authoringRegion) {
+        configList.push('--luis:endpoint');
+        configList.push(`https://${config.luis.authoringRegion}.api.cognitive.microsoft.com`);
+      }
     }
+
     return configList;
   };
 
-  start = async (dir: string, config: DialogSetting) => {
-    // if dir exists
-    // const port = this.startPort + Object.keys(this.bots).length;
-    // console.log(`process listening port: ${port}`);
-    await this.buildProcess(dir);
-    const child = spawn(
-      'dotnet',
-      ['bin/Debug/netcoreapp2.1/BotProject.dll', `--urls`, `http://localhost:3979`, ...this.getLuisConfig(config)],
-      {
-        detached: true,
-        cwd: dir,
-        stdio: ['ignore', 'ignore', 'inherit'],
-      }
-    );
-
+  private addListeners = (child: ChildProcess, handler: Function) => {
     if (child.stdout !== null) {
       child.stdout.on('data', (data: any) => {
         console.log(`stdout: ${data}`);
@@ -97,7 +88,7 @@ class BotManager {
 
     child.on('close', code => {
       console.log(`close ${code}`);
-      this.stop(dir);
+      handler();
     });
 
     child.on('error', (err: any) => {
@@ -106,7 +97,7 @@ class BotManager {
 
     child.on('exit', code => {
       console.log(`exit: ${code}`);
-      this.stop(dir);
+      handler();
     });
 
     child.on('message', msg => {
@@ -115,9 +106,22 @@ class BotManager {
 
     child.on('disconnect', code => {
       console.log(`disconnect: ${code}`);
-      this.stop(dir);
+      handler();
     });
+  };
 
+  start = async (dir: string, config: DialogSetting) => {
+    await this.buildProcess(dir);
+    const child = spawn(
+      'dotnet',
+      ['bin/Debug/netcoreapp2.1/BotProject.dll', `--urls`, `http://localhost:3979`, ...this.getConnectorConfig(config)],
+      {
+        detached: true,
+        cwd: dir,
+        stdio: ['ignore', 'ignore', 'inherit'],
+      }
+    );
+    this.addListeners(child, () => this.stop(dir));
     if (!this.bots[dir]) {
       this.bots[dir] = child;
       console.log(`Starting child process ${child.pid}`);
@@ -126,7 +130,7 @@ class BotManager {
     }
   };
 
-  // stop a bot from running
+  // stop a bot running
   stop = (dir: string) => {
     if (this.bots[dir]) {
       console.log(`kill this bot with process PID: ${this.bots[dir].pid}`);
@@ -134,11 +138,13 @@ class BotManager {
       delete this.bots[dir];
     }
   };
+
   stopAll = () => {
     for (const key in this.bots) {
       this.stop(key);
     }
   };
+
   status = (dir: string) => {
     return this.bots[dir] ? true : false;
   };
@@ -149,4 +155,4 @@ class BotManager {
     }
   };
 }
-export const botManager = new BotManager();
+export const defaultBotManager = new DefaultBotConnectorManager();
