@@ -13,4 +13,5 @@ export * from './appschema';
 export * from './types';
 export * from './constant';
 export * from './convertUtils';
+export * from './expression';
 export { LgMetaData, LgTemplateRef } from '@bfc/indexers';
