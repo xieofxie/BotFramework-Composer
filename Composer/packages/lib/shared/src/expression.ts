@@ -16,7 +16,7 @@ export enum ExpressionType {
   RegexFunction,
 }
 
-export const TypesList = [
+const TypesList = [
   {
     type: ExpressionType.StringFuntion,
     functions: [
@@ -147,6 +147,11 @@ export const TypesList = [
 export const getFunctionsByType = (type: ExpressionType) => {
   const result = TypesList.filter(item => item.type === type);
   return result[0].functions;
+};
+
+export const getTypeByFunction = (func: string) => {
+  const result = TypesList.find(item => item.functions.includes(func));
+  return result?.type;
 };
 
 export const getFunctionByName = (name: string) => {

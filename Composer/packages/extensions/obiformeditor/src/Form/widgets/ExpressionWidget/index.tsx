@@ -1,17 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import React from 'react';
-import { TextField, ITextFieldProps, ITextFieldStyles } from 'office-ui-fabric-react/lib/TextField';
+import React, { useState, useRef } from 'react';
+import { TextField, ITextFieldProps, ITextFieldStyles, ITextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { JSONSchema6 } from 'json-schema';
 import formatMessage from 'format-message';
 import get from 'lodash/get';
 
-import { FormContext } from '../types';
-import { EditableField } from '../fields/EditableField';
+import { FormContext } from '../../types';
+import { EditableField } from '../../fields/EditableField';
+import { WidgetLabel } from '..//WidgetLabel';
 
-import { WidgetLabel } from './WidgetLabel';
+import { FormModal } from './FormModal';
 
 interface ExpresionWidgetProps extends ITextFieldProps {
   hiddenErrMessage?: boolean;
@@ -43,7 +44,19 @@ const getDefaultErrorMessage = errMessage => {
 };
 
 export const ExpressionWidget: React.FC<ExpresionWidgetProps> = props => {
-  const { formContext, schema, id, label, editable, hiddenErrMessage, onValidate, options = {}, ...rest } = props;
+  const {
+    formContext,
+    schema,
+    id,
+    label,
+    value,
+    editable,
+    hiddenErrMessage,
+    onValidate,
+    onChange,
+    options = {},
+    ...rest
+  } = props;
   const { description } = schema;
   const { hideLabel } = options;
   const name = props.id?.split('_')[props.id?.split('_').length - 1];
@@ -74,16 +87,35 @@ export const ExpressionWidget: React.FC<ExpresionWidgetProps> = props => {
     }
   };
 
+  const inputRef = useRef<ITextField>(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const onFocus = () => {
+    setShowDialog(true);
+  };
+
+  const onSubmit = (e, val) => {
+    onChange(e, val);
+    setShowDialog(false);
+    inputRef.current?.blur();
+  };
+  const onClose = () => {
+    setShowDialog(false);
+  };
+
   const Field = editable ? EditableField : TextField;
 
   return (
     <>
       {!hideLabel && !!label && <WidgetLabel label={label} description={description} id={id} />}
       <Field
+        componentRef={inputRef}
         {...rest}
         id={id}
+        value={value}
         onGetErrorMessage={onGetErrorMessage}
         autoComplete="off"
+        onFocus={onFocus}
+        onChange={onChange}
         styles={{
           root: { ...(!hideLabel && !!label ? {} : { margin: '7px 0' }) },
           errorMessage: {
@@ -93,6 +125,7 @@ export const ExpressionWidget: React.FC<ExpresionWidgetProps> = props => {
         }}
         options={options}
       />
+      {showDialog && <FormModal value={value} onSubmit={onSubmit} onClose={onClose} isOpen={showDialog} />}
     </>
   );
 };
