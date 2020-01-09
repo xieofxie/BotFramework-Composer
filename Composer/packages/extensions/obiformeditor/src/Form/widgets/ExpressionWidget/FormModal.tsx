@@ -151,6 +151,7 @@ export function FormModal(props: FormModalWidgetProps) {
               <TextField
                 key={`param${index + 1}`}
                 label={formatMessage('params {index}', { index: index + 1 })}
+                placeholder={param}
                 value={expressionSelectors?.params[index]}
                 onChange={updateParams(index)}
                 data-testid={`param${index}`}

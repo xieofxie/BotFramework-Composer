@@ -96,10 +96,15 @@ export const ExpressionWidget: React.FC<ExpresionWidgetProps> = props => {
   const onSubmit = (e, val) => {
     onChange(e, val);
     setShowDialog(false);
-    inputRef.current?.blur();
+    setTimeout(() => {
+      inputRef.current && inputRef.current.blur();
+    });
   };
   const onClose = () => {
     setShowDialog(false);
+    setTimeout(() => {
+      inputRef.current && inputRef.current.blur();
+    });
   };
 
   const Field = editable ? EditableField : TextField;
