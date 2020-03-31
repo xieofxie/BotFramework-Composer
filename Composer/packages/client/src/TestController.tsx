@@ -202,6 +202,16 @@ export const TestController: React.FC = () => {
             id={'publishAndConnect'}
             disabled={showError}
           />
+          {/* <PrimaryButton
+            css={botButton}
+            text={formatMessage('Publish to Azure')}
+            onClick={() => {
+              const sensitiveSettings = settingsStorage.get(botName);
+              publishToTarget(state.projectId, { name: 'publishToAzure', sensitiveSettings });
+            }}
+            id={'publishtoazure'}
+            disabled={showError}
+          /> */}
         </div>
         <Callout
           role="alertdialog"
