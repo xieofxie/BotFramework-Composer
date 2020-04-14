@@ -5,6 +5,7 @@ import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
+import { v4 as uuid } from 'uuid';
 import glob from 'globby';
 import {
   readFile,
@@ -44,12 +45,15 @@ class BotProjectDeploy {
   private runtimeFolder: string;
   private projFolder: string; // save bot and runtime
   private creds: any;
-
+  private historyFilePath: string;
+  private publishingBots: any;
   private readonly tenantId = '72f988bf-86f1-41af-91ab-2d7cd011db47';
 
   constructor() {
     this.subId = '3e71927d-2914-4c36-bc5d-6369d1f42457';
     this.projFolder = path.resolve(__dirname, '../publishBots');
+    this.historyFilePath = path.resolve(__dirname, 'publishHistory.txt');
+    this.publishingBots = {};
   }
 
   private pack(scope: any) {
@@ -57,6 +61,13 @@ class BotProjectDeploy {
       value: scope,
     };
   }
+
+  private getCreds = async () => {
+    if (!this.creds) {
+      this.creds = await msRestNodeAuth.interactiveLogin();
+    }
+    return this.creds;
+  };
 
   private getDeploymentTemplateParam(
     appId: string,
@@ -621,35 +632,73 @@ class BotProjectDeploy {
     console.log(`+ To delete this resource group, run 'az group delete -g ${resourceGroupName} --no-wait'`);
   }
 
-  public async createAndDeploy(
-    name: string,
-    location: string,
-    environment: string,
-    luisAuthoringKey?: string,
-    luisAuthoringRegion?: string,
-    appId?: string,
-    appPassword?: string
-  ) {
-    await this.create(name, location, environment, luisAuthoringKey, appId, appPassword);
-    await this.deploy(name, environment, luisAuthoringKey, luisAuthoringRegion);
+  public async createAndDeploy(resource: CreateAndDeployResources, jobId: string, botId: string, profileName: string) {
+    const { name, location, environment, luisAuthoringKey, appId, appPassword, luisAuthoringRegion } = resource;
+    try {
+      await this.create(name, location, environment, luisAuthoringKey, appId, appPassword);
+      await this.deploy(name, environment, luisAuthoringKey, luisAuthoringRegion);
+      // update publishing status
+      if (this.publishingBots[botId][profileName]) {
+        const index = this.publishingBots[botId][profileName].findIndex(item => item.result.id === jobId);
+        const newHistory = {
+          status: 200,
+          ...this.publishingBots[botId][profileName][index].result,
+          message: 'Success',
+          log: this.publishingBots[botId][profileName][index].result.log + '\nPublish succeeded!',
+          endpoint: `http://${name}-${environment}.azurewebsites.net`,
+        };
+        // add into history
+        await this.addHistory(newHistory, botId, profileName);
+        // remove publishing status
+        this.publishingBots[botId][profileName]
+          .slice(0, index)
+          .concat(this.publishingBots[botId][profileName].slice(index));
+      }
+    } catch (error) {
+      // update error mes in history
+    }
   }
 
-  public async getStatus() {
+  addHistory = async (newHistory, projectId, profileName) => {
+    if (!this.historyFilePath) {
+      this.historyFilePath = path.resolve(__dirname, 'publishHistory.txt');
+    }
+    let fileContent = await readJson(this.historyFilePath);
+    if (!fileContent) {
+      fileContent = {};
+    }
+    if (!fileContent[projectId]) {
+      fileContent[projectId] = {};
+    }
+    if (!fileContent[projectId][profileName]) {
+      fileContent[projectId][profileName] = [];
+    }
+    fileContent[projectId][profileName].push(newHistory);
+    await writeJson(this.historyFilePath, fileContent);
+  };
+
+  getStatus = async (config: PublishConfig, project, user) => {
+    const profileName = config.name;
+    const botId = project.id;
+
     return {
       botStatus: 'unConnected',
     };
-  }
-  private getCreds = async () => {
-    if (!this.creds) {
-      this.creds = await msRestNodeAuth.interactiveLogin();
-    }
-    return this.creds;
   };
-  history = async config => { };
-  rollback = async (config, versionId) => { };
-  publish = async (config: PublishConfig, project, user) => {
+
+  history = async (config: PublishConfig, project, user) => {
+    const profileName = config.name;
+    const botId = project.id;
+    const histories = await readJson(this.historyFilePath);
+    if (histories && histories[botId] && histories[botId][profileName]) {
+      return histories[botId][profileName];
+    }
+    return [];
+  };
+  // rollback = async (config, versionId) => { };
+  publish = async (config: PublishConfig, project, metadata, user) => {
     try {
-      const { settings, templatePath } = config;
+      const { settings, templatePath, name } = config;
       this.botFolder = project.dataDir || '';
       this.runtimeFolder = templatePath;
 
@@ -659,25 +708,32 @@ class BotProjectDeploy {
       await copy(this.botFolder, path.resolve(this.projFolder, 'ComposerDialogs'), {
         recursive: true,
       });
-      // await copy(this.runtimeFolder, this.projFolder, { recursive: true });
+      const jobId = uuid();
+      // merge defaultResources, settings luis setting, and user input configuration
+      const resources: CreateAndDeployResources = { ...defaultResources, ...config };
 
-      this.createAndDeploy(
-        name,
-        location,
-        environment,
-        luisAuthoringKey,
-        settings.luis.authoringRegion || luisAuthoringRegion,
-        appId,
-        appPassword
-      );
-      return {
-        status: 200,
+      // not await, return 202 publishing status right now
+      this.createAndDeploy(resources, jobId, project.id, name);
+
+      // save in publishingBots
+      if (!this.publishingBots[project.id]) {
+        this.publishingBots[project.id] = {};
+      }
+      if (!this.publishingBots[project.id][name]) {
+        this.publishingBots[project.id][name] = [];
+      }
+      const response = {
+        status: 202,
         result: {
-          jobId: '',
-          version: 'default',
-          endpoint: `http://${name}-${environment}.azurewebsites.net`,
+          id: jobId,
+          time: new Date(),
+          message: 'Accepted for publishing.',
+          log: 'Publish starting...',
+          comment: metadata.comment,
         },
       };
+      this.publishingBots[project.id][name].push(response);
+      return response;
     } catch (error) {
       console.log(error);
     }
@@ -685,23 +741,36 @@ class BotProjectDeploy {
 }
 
 interface PublishConfig {
-  botId: string;
   version: string;
   subscriptionID: string;
   settings: any;
   templatePath: string;
+  name: string; //profile name
+  remoteName: string; // for create resource and deploy
 }
 
-const azurePublish = new BotProjectDeploy();
+interface CreateAndDeployResources {
+  name: string;
+  location: string;
+  environment: string;
+  luisAuthoringKey?: string;
+  luisAuthoringRegion?: string;
+  appId?: string;
+  appPassword?: string;
+}
 
 // set in the config
-const name = 'testComposerAzurePublish';
-const environment = 'composer';
-const location = 'westus';
-const luisAuthoringKey = null;
-const luisAuthoringRegion = 'westus';
-const appId = null;
-const appPassword = 'shuibian$TEST123';
+const defaultResources = {
+  name: 'testComposerAzurePublish',
+  environment: 'composer',
+  location: 'westus',
+  luisAuthoringKey: null,
+  luisAuthoringRegion: 'westus',
+  appId: null,
+  appPassword: 'shuibian$TEST123',
+};
+
+const azurePublish = new BotProjectDeploy();
 
 export default async (composer: any): Promise<void> => {
   // pass in the custom storage class that will override the default
