@@ -60,11 +60,7 @@ const Publish: React.FC<PublishPageProps> = props => {
         const type = publishTypes?.filter(t => t.name === target.type)[0];
         if (type?.features?.rollback) {
           return true;
-        } else {
-          console.log('rollback not supported on', type);
         }
-      } else {
-        console.log('no rollback to version without id or non 200 status');
       }
       return false;
     },
@@ -155,18 +151,17 @@ const Publish: React.FC<PublishPageProps> = props => {
   useEffect(() => {
     if (settings.publishTargets && settings.publishTargets.length > 0) {
       const _selected = settings.publishTargets.find(item => item.name === selectedTargetName);
-
       setSelectedTarget(_selected);
       // load publish histories
       if (selectedTargetName === 'all') {
         for (const target of settings.publishTargets) {
           actions.getPublishHistory(projectId, target);
         }
-      } else if (selectedTargetName !== 'no' && _selected) {
+      } else if (_selected) {
         actions.getPublishHistory(projectId, _selected);
       }
     }
-  }, [selectedTargetName, settings.publishTargets]);
+  }, [settings.publishTargets, selectedTargetName]);
 
   // once history is loaded, display it
   useEffect(() => {
@@ -233,6 +228,7 @@ const Publish: React.FC<PublishPageProps> = props => {
         },
         undefined
       );
+      onSelectTarget(name);
     },
     [settings.publishTargets, projectId, botName]
   );
@@ -256,13 +252,15 @@ const Publish: React.FC<PublishPageProps> = props => {
         },
         undefined
       );
+
+      onSelectTarget(name);
     },
     [settings.publishTargets, projectId, botName, editTarget]
   );
 
   useEffect(() => {
     setDialogProps({
-      title: 'Add a publish profile',
+      title: formatMessage('Add a publish profile'),
       type: DialogType.normal,
       children: (
         <CreatePublishTarget
@@ -270,9 +268,9 @@ const Publish: React.FC<PublishPageProps> = props => {
             return { key: type.name, text: type.name };
           })}
           targets={settings.publishTargets}
-          onSave={savePublishTarget}
+          updateSettings={savePublishTarget}
           current={null}
-          onCancel={() => setAddDialogHidden(true)}
+          closeDialog={() => setAddDialogHidden(true)}
         />
       ),
     });
@@ -280,7 +278,7 @@ const Publish: React.FC<PublishPageProps> = props => {
 
   useEffect(() => {
     setEditDialogProps({
-      title: 'Edit a publish profile',
+      title: formatMessage('Edit a publish profile'),
       type: DialogType.normal,
       children: (
         <CreatePublishTarget
@@ -289,8 +287,8 @@ const Publish: React.FC<PublishPageProps> = props => {
           })}
           current={editTarget ? editTarget.item : null}
           targets={settings.publishTargets?.filter(item => editTarget && item.name != editTarget.item.name)}
-          onSave={updatePublishTarget}
-          onCancel={() => setEditDialogHidden(true)}
+          updateSettings={updatePublishTarget}
+          closeDialog={() => setEditDialogHidden(true)}
         />
       ),
     });
@@ -376,7 +374,7 @@ const Publish: React.FC<PublishPageProps> = props => {
   );
 
   return (
-    <div>
+    <Fragment>
       <Dialog
         hidden={addDialogHidden}
         onDismiss={() => setAddDialogHidden(true)}
@@ -395,13 +393,10 @@ const Publish: React.FC<PublishPageProps> = props => {
       >
         {editDialogProps.children}
       </Dialog>
-      <PublishDialog
-        hidden={publishDialogHidden}
-        onDismiss={() => setPublishDialogHidden(true)}
-        onSubmit={publish}
-        target={selectedTarget}
-      />
-      <LogDialog hidden={!showLog} version={selectedVersion} onDismiss={() => setShowLog(false)} />
+      {!publishDialogHidden && (
+        <PublishDialog onDismiss={() => setPublishDialogHidden(true)} onSubmit={publish} target={selectedTarget} />
+      )}
+      {showLog && <LogDialog version={selectedVersion} onDismiss={() => setShowLog(false)} />}
       <ToolBar toolbarItems={toolbarItems} />
       <div css={ContentHeaderStyle}>
         <h1 css={HeaderText}>{selectedTarget ? selectedTargetName : formatMessage('Publish Profiles')}</h1>
@@ -449,7 +444,7 @@ const Publish: React.FC<PublishPageProps> = props => {
           </Fragment>
         </div>
       </div>
-    </div>
+    </Fragment>
   );
 };
 
@@ -460,7 +455,7 @@ const LogDialog = props => {
   };
   return (
     <Dialog
-      hidden={props.hidden}
+      hidden={false}
       onDismiss={props.onDismiss}
       dialogContentProps={logDialogProps}
       modalProps={{ isBlocking: true }}
