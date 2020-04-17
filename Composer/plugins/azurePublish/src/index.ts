@@ -5,723 +5,198 @@ import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
+import archiver from 'archiver';
+import { BotProjectDeploy, BotProjectDeployConfig } from '@bfc/libs/bot-deploy';
 import { v4 as uuid } from 'uuid';
 import glob from 'globby';
-import {
-  readFile,
-  writeFile,
-  copy,
-  createWriteStream,
-  pathExists,
-  remove,
-  mkdir,
-  readJson,
-  writeJson,
-  existsSync,
-  emptyDir,
-  readFileSync,
-} from 'fs-extra';
-import { GraphRbacManagementClient } from '@azure/graph';
-import * as msRestNodeAuth from '@azure/ms-rest-nodeauth';
-import { ResourceManagementClient } from '@azure/arm-resources';
-import { WebSiteManagementClient } from '@azure/arm-appservice-profile-2019-03-01-hybrid';
-import {
-  ResourceGroup,
-  Deployment,
-  ResourceGroupsCreateOrUpdateResponse,
-  DeploymentsValidateResponse,
-  DeploymentsCreateOrUpdateResponse,
-} from '@azure/arm-resources/esm/models';
-import rp from 'request-promise';
-import archiver from 'archiver';
+import { copy, emptyDir, readJson, pathExists, writeJson, stat } from 'fs-extra';
+import { DeviceTokenCredentials } from '@azure/ms-rest-nodeauth';
 
-const execAsync = promisify(exec);
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const luBuild = require('@microsoft/bf-lu/lib/parser/lubuild/builder.js');
+interface CreateAndDeployResources {
+  name: string;
+  location: string;
+  environment: string;
+  subscriptionID: string;
+  // token: string;
+  luisAuthoringKey?: string;
+  luisAuthoringRegion?: string;
+  appPassword: string;
+  username: string;
+}
 
-class BotProjectDeploy {
-  private subId: string;
-  private botFolder: string; // path to get dialogs, lus, lgs, settings
-  private runtimeFolder: string;
-  private projFolder: string; // save bot and runtime
-  private creds: any;
+interface PublishConfig {
+  customizeConfiguration: CreateAndDeployResources;
+  settings: any;
+  templatePath: string;
+  name: string; //profile name
+}
+
+class AzurePublisher {
+  private publishingBots: { [key: string]: any };
   private historyFilePath: string;
-  private publishingBots: any;
-  private readonly tenantId = '72f988bf-86f1-41af-91ab-2d7cd011db47';
-
+  private projFolder: string;
+  private botFolder: string;
+  private templatePath: string;
+  private azDeployer: BotProjectDeploy;
   constructor() {
-    this.subId = '3e71927d-2914-4c36-bc5d-6369d1f42457';
     this.projFolder = path.resolve(__dirname, '../publishBots');
+    this.botFolder = path.resolve(__dirname, '../publishBots/ComposerDialogs');
     this.historyFilePath = path.resolve(__dirname, 'publishHistory.txt');
     this.publishingBots = {};
   }
 
-  private pack(scope: any) {
-    return {
-      value: scope,
-    };
-  }
-
-  private getCreds = async () => {
-    if (!this.creds) {
-      this.creds = await msRestNodeAuth.interactiveLogin();
-    }
-    return this.creds;
+  private init = async (srcBot: string, srcTemplate: string) => {
+    await emptyDir(this.botFolder);
+    await emptyDir(path.resolve(this.projFolder, 'bin')); // empty the release bot
+    // copy bot and runtime into projFolder
+    await copy(srcBot, this.botFolder, {
+      recursive: true,
+    });
+    // await copy(srcTemplate, this.projFolder);
   };
-
-  private getDeploymentTemplateParam(
-    appId: string,
-    appPwd: string,
-    location: string,
-    name: string,
-    shouldCreateAuthoringResource: boolean
-  ) {
-    return {
-      appId: this.pack(appId),
-      appSecret: this.pack(appPwd),
-      appServicePlanLocation: this.pack(location),
-      botId: this.pack(name),
-      shouldCreateAuthoringResource: this.pack(shouldCreateAuthoringResource),
-    };
-  }
-
-  private async readTemplateFile(templatePath?: string): Promise<any> {
-    if (!templatePath) {
-      templatePath = path.resolve(__dirname, 'DeploymentTemplates', 'template-with-preexisting-rg.json');
+  private getHistory = async (botId: string, profileName: string) => {
+    if (await pathExists(this.historyFilePath)) {
+      const histories = await readJson(this.historyFilePath);
+      if (histories && histories[botId] && histories[botId][profileName]) {
+        return histories[botId][profileName];
+      }
+      return [];
     }
-
-    return new Promise((resolve, reject) => {
-      readFile(templatePath, { encoding: 'utf-8' }, (err, data) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(data);
-      });
-    });
-  }
-
-  private async createResourceGroup(
-    client: ResourceManagementClient,
-    location: string,
-    resourceGroupName: string
-  ): Promise<ResourceGroupsCreateOrUpdateResponse> {
-    console.log(`> Creating resource group ...`);
-    const param = {
-      location: location,
-    } as ResourceGroup;
-
-    return await client.resourceGroups.createOrUpdate(resourceGroupName, param);
-  }
-
-  private async validateDeployment(
-    client: ResourceManagementClient,
-    templatePath: string,
-    location: string,
-    resourceGroupName: string,
-    deployName: string,
-    templateParam: any
-  ): Promise<DeploymentsValidateResponse> {
-    console.log('> Validating Azure deployment ...');
-    const templateFile = await this.readTemplateFile(templatePath);
-    const deployParam = {
-      properties: {
-        template: JSON.parse(templateFile),
-        parameters: templateParam,
-        mode: 'Incremental',
-      },
-    } as Deployment;
-    return await client.deployments.validate(resourceGroupName, deployName, deployParam);
-  }
-
-  private async createDeployment(
-    client: ResourceManagementClient,
-    templatePath: string,
-    location: string,
-    resourceGroupName: string,
-    deployName: string,
-    templateParam: any
-  ): Promise<DeploymentsCreateOrUpdateResponse> {
-    console.log(`> Deploying Azure services (this could take a while)...`);
-    const templateFile = await this.readTemplateFile(templatePath);
-    const deployParam = {
-      properties: {
-        template: JSON.parse(templateFile),
-        parameters: templateParam,
-        mode: 'Incremental',
-      },
-    } as Deployment;
-
-    return await client.deployments.createOrUpdate(resourceGroupName, deployName, deployParam);
-  }
-
-  private async createApp(graphClient: GraphRbacManagementClient, displayName: string, appPassword: string) {
-    const createRes = await graphClient.applications.create({
-      displayName: displayName,
-      passwordCredentials: [
-        {
-          value: appPassword,
-          startDate: new Date(),
-          endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 2)),
+  };
+  private updateHistory = async (botId: string, profileName: string, newHistory: any) => {
+    let histories = {};
+    if (await pathExists(this.historyFilePath)) {
+      histories = (await readJson(this.historyFilePath)) || {};
+    }
+    if (!histories[botId]) {
+      histories[botId] = {};
+    }
+    if (!histories[botId][profileName]) {
+      histories[botId][profileName] = [];
+    }
+    histories[botId][profileName].push(newHistory);
+    await writeJson(this.historyFilePath, histories);
+  };
+  private addLoadingStatus = (botId: string, profileName: string, newStatus) => {
+    // save in publishingBots
+    if (!this.publishingBots[botId]) {
+      this.publishingBots[botId] = {};
+    }
+    if (!this.publishingBots[botId][profileName]) {
+      this.publishingBots[botId][profileName] = [];
+    }
+    this.publishingBots[botId][profileName].push(newStatus);
+  };
+  private removeLoadingStatus = (botId: string, profileName: string, jobId: string) => {
+    if (this.publishingBots[botId] && this.publishingBots[botId][profileName]) {
+      const index = this.publishingBots[botId][profileName].findIndex(item => item.result.id === jobId);
+      const status = this.publishingBots[botId][profileName][index];
+      this.publishingBots[botId][profileName] = this.publishingBots[botId][profileName]
+        .slice(0, index)
+        .concat(this.publishingBots[botId][profileName].slice(index + 1));
+      return status;
+    }
+    return;
+  };
+  private getLoadingStatus = (botId: string, profileName: string) => {
+    if (this.publishingBots[botId] && this.publishingBots[botId][profileName]) {
+      // get current status
+      return this.publishingBots[botId][profileName][this.publishingBots[botId][profileName].length - 1];
+    } else {
+      return {
+        status: 404,
+        result: {
+          message: 'bot not published',
         },
-      ],
-      availableToOtherTenants: true,
-      replyUrls: ['https://token.botframework.com/.auth/web/redirect'],
-    });
-    return createRes;
-  }
-
-  private unpackObject(output: any) {
-    const unpakced: any = {};
-    for (const key in output) {
-      const objValue = output[key];
-      if (objValue.value) {
-        unpakced[key] = objValue.value;
-      }
-    }
-    return unpakced;
-  }
-
-  private async updateDeploymentJsonFile(
-    settingsPath: string,
-    client: ResourceManagementClient,
-    resourceGroupName: string,
-    deployName: string,
-    appId: string,
-    appPwd: string
-  ): Promise<any> {
-    const outputs = await client.deployments.get(resourceGroupName, deployName);
-    return new Promise((resolve, reject) => {
-      if (outputs.properties.outputs) {
-        const outputResult = outputs.properties.outputs;
-        const applicatoinResult = {
-          MicrosoftAppId: appId,
-          MicrosoftAppPassword: appPwd,
-        };
-        const outputObj = this.unpackObject(outputResult);
-
-        const result = {};
-        Object.assign(result, outputObj, applicatoinResult);
-
-        writeFile(settingsPath, JSON.stringify(result, null, 4), err => {
-          if (err) {
-            reject(err);
-          }
-          resolve(result);
-        });
-      } else {
-        resolve({});
-      }
-    });
-  }
-
-  private async writeToLog(data: any, logFile: string) {
-    return new Promise((resolve, reject) => {
-      writeFile(logFile, JSON.stringify(data, null, 4), err => {
-        if (err) {
-          reject(err);
-        }
-        resolve();
-      });
-    });
-  }
-
-  private async getFiles(dir: string): Promise<string[]> {
-    const files = await glob('**/*', { cwd: dir, dot: true });
-    const result = [];
-    for (const file of files) {
-      result.push(path.join(dir, file));
-    }
-    return result;
-  }
-
-  private async botPrepareDeploy(pathToDeploymentFile: string) {
-    return new Promise((resolve, reject) => {
-      const data = `[config]\nproject = BotProject.csproj`;
-      writeFile(pathToDeploymentFile, data, err => {
-        reject(err);
-      });
-    });
-  }
-
-  private async dotnetPublish(publishFolder: string, projFolder: string, botPath?: string) {
-    const projectPath = path.join(projFolder, 'BotProject.csproj');
-    await execAsync(`dotnet publish ${projectPath} -c release -o ${publishFolder} -v q`);
-    return new Promise((resolve, reject) => {
-      const remoteBotPath = path.join(publishFolder, 'ComposerDialogs');
-      const localBotPath = path.join(projFolder, 'ComposerDialogs');
-
-      if (botPath) {
-        console.log(`Publishing dialogs from external bot project: ${botPath}`);
-        copy(
-          botPath,
-          remoteBotPath,
-          {
-            overwrite: true,
-            recursive: true,
-          },
-          err => {
-            reject(err);
-          }
-        );
-      } else {
-        copy(
-          localBotPath,
-          remoteBotPath,
-          {
-            overwrite: true,
-            recursive: true,
-          },
-          err => {
-            reject(err);
-          }
-        );
-      }
-      resolve();
-    });
-  }
-
-  private async zipDirectory(source: string, out: string) {
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    const stream = createWriteStream(out);
-
-    return new Promise((resolve, reject) => {
-      archive
-        .directory(source, false)
-        .on('error', err => reject(err))
-        .pipe(stream);
-
-      stream.on('close', () => resolve());
-      archive.finalize();
-    });
-  }
-
-  private notEmptyLuisModel(file: string) {
-    return readFileSync(file).length > 0;
-  }
-  public async deploy(
-    name: string,
-    environment: string,
-    luisAuthoringKey?: string,
-    luisAuthoringRegion?: string,
-    logFile?: string,
-    botPath?: string,
-    language?: string
-  ) {
-    if (!logFile) {
-      logFile = 'deploy_log.txt';
-    }
-    await this.getCreds();
-    const resourceClient = new ResourceManagementClient(this.creds, this.subId);
-    const webClient = new WebSiteManagementClient(this.creds, this.subId);
-
-    const resourceGroup = `${name}-${environment}`;
-
-    // Check for existing deployment files
-    const deployFilePath = path.join(this.projFolder, '.deployment');
-    if (!(await pathExists(deployFilePath))) {
-      await this.botPrepareDeploy(deployFilePath);
-    }
-
-    const zipPath = path.join(this.projFolder, 'code1.zip');
-    if (await pathExists(zipPath)) {
-      await remove(zipPath);
-    }
-
-    // dotnet publish
-    const publishFolder = path.resolve(this.projFolder, 'bin/Release/netcoreapp3.1');
-    await this.dotnetPublish(publishFolder, this.projFolder, botPath);
-    const settingsPath = path.join(this.projFolder, 'appsettings.deployment.json');
-    const settings = await readJson(settingsPath);
-    const luisSettings = settings.luis;
-
-    let luisEndpointKey: string;
-
-    if (!luisAuthoringKey) {
-      luisAuthoringKey = luisSettings.authoringKey;
-      luisEndpointKey = luisSettings.endpointKey;
-    }
-
-    if (!luisAuthoringRegion) {
-      luisAuthoringRegion = luisSettings.region;
-    }
-
-    if (!language) {
-      language = 'en-us';
-    }
-
-    if (luisAuthoringKey && luisAuthoringRegion) {
-      // publishing luis
-      const remoteBotPath = path.join(publishFolder, 'ComposerDialogs');
-      const botFiles = await this.getFiles(remoteBotPath);
-      const modelFiles = botFiles.filter(name => {
-        return name.endsWith('.lu') && this.notEmptyLuisModel(name);
-      });
-
-      const generatedFolder = path.join(remoteBotPath, 'generated');
-      if (!(await pathExists(generatedFolder))) {
-        await mkdir(generatedFolder);
-      }
-      const builder = new luBuild.Builder(msg => console.log(msg));
-
-      const loadResult = await builder.loadContents(
-        modelFiles,
-        language || '',
-        environment || '',
-        luisAuthoringRegion || ''
-      );
-
-      const buildResult = await builder.build(
-        loadResult.luContents,
-        loadResult.recognizers,
-        luisAuthoringKey,
-        luisAuthoringRegion,
-        name,
-        environment,
-        language,
-        false,
-        loadResult.multiRecognizers,
-        loadResult.settings
-      );
-      await builder.writeDialogAssets(buildResult, true, generatedFolder);
-
-      const luisConfigFiles = (await this.getFiles(remoteBotPath)).filter(filename =>
-        filename.includes('luis.settings')
-      );
-      const luisAppIds: any = {};
-
-      for (const luisConfigFile of luisConfigFiles) {
-        const luisSettings = await readJson(luisConfigFile);
-        Object.assign(luisAppIds, luisSettings.luis);
-      }
-
-      const luisEndpoint = `https://${luisAuthoringRegion}.api.cognitive.microsoft.com`;
-      const luisConfig: any = {
-        endpoint: luisEndpoint,
-        endpointKey: luisEndpointKey,
       };
-
-      Object.assign(luisConfig, luisAppIds);
-
-      const deploymentSettingsPath = path.join(publishFolder, 'appsettings.deployment.json');
-      const settings: any = await readJson(deploymentSettingsPath);
-      settings.luis = luisConfig;
-
-      await writeJson(deploymentSettingsPath, settings);
-      const token = await this.creds.getToken();
-
-      const getAccountUri = `${luisEndpoint}/luis/api/v2.0/azureaccounts`;
-      const options = {
-        headers: { Authorization: `Bearer ${token.accessToken}`, 'Ocp-Apim-Subscription-Key': luisAuthoringKey },
-      } as rp.RequestPromiseOptions;
-      const response = await rp.get(getAccountUri, options);
-      const jsonRes = JSON.parse(response);
-      const account = this.getAccount(jsonRes, `${name}-${environment}-luis`);
-
-      for (const k in luisAppIds) {
-        const luisAppId = luisAppIds[k];
-        console.log(`Assigning to luis app id: ${luisAppIds}`);
-        const luisAssignEndpoint = `${luisEndpoint}/luis/api/v2.0/apps/${luisAppId}/azureaccounts`;
-        const options = {
-          body: account,
-          json: true,
-          headers: { Authorization: `Bearer ${token.accessToken}`, 'Ocp-Apim-Subscription-Key': luisAuthoringKey },
-        } as rp.RequestPromiseOptions;
-        const response = await rp.post(luisAssignEndpoint, options);
-        console.log(response);
-      }
-      console.log('Luis Publish Success! ...');
     }
-    console.log('Packing up the bot service ...');
-    await this.zipDirectory(publishFolder, zipPath);
-    console.log('Packing Service Success!');
-
-    console.log('Publishing to Azure ...');
-    await this.deployZip(webClient, zipPath, name, environment, this.creds, this.subId);
-    console.log('Publish To Azure Success!');
-  }
-
-  private getAccount(accounts: any, filter: string) {
-    for (const account of accounts) {
-      if (account.AccountName === filter) {
-        return account;
-      }
-    }
-  }
-
-  private async deployZip(
-    webSiteClient: WebSiteManagementClient,
-    zipPath: string,
-    name: string,
-    env: string,
-    creds,
-    subId: string
-  ) {
-    console.log('Retrieve publishing details ...');
-    const userName = `${name}-${env}`;
-    const userPwd = `${name}-${env}-${new Date().getTime().toString()}`;
-
-    const updateRes = await webSiteClient.updatePublishingUser({
-      publishingUserName: userName,
-      publishingPassword: userPwd,
-    });
-
-    const publishEndpoint = `https://${name}-${env}.scm.azurewebsites.net/zipdeploy`;
-
-    const publishCreds = Buffer.from(`${userName}:${userPwd}`).toString('base64');
-
-    const fileContent = await readFile(zipPath);
-    const options = {
-      body: fileContent,
-      encoding: null,
-      headers: {
-        Authorization: `Basic ${publishCreds}`,
-        'Content-Type': 'application/zip',
-        'Content-Length': fileContent.length,
-      },
-    } as rp.RequestPromiseOptions;
-    const response = await rp.post(publishEndpoint, options);
-    console.log(response);
-  }
-
-  public async create(
+  };
+  private createAndDeploy = async (
+    botId: string,
+    profileName: string,
+    jobId: string,
     name: string,
     location: string,
     environment: string,
+    appPassword: string,
     luisAuthoringKey?: string,
-    appId?: string,
-    appPassword?: string
-  ) {
-    await this.getCreds();
-    const credsForGraph = new msRestNodeAuth.DeviceTokenCredentials(
-      this.creds.clientId,
-      this.tenantId,
-      this.creds.username,
-      'graph',
-      this.creds.environment,
-      this.creds.tokenCache
-    );
-    const graphClient = new GraphRbacManagementClient(credsForGraph, this.tenantId, {
-      baseUri: 'https://graph.windows.net',
-    });
-    const logFile = path.join(__dirname, '../create_log.txt');
-
-    const deploymentSettingsPath = path.join(this.projFolder, 'appsettings.deployment.json');
-    if (!existsSync(deploymentSettingsPath)) {
-      console.log(`! Could not find an 'appsettings.deployment.json' file in the current directory.`);
-      return;
-    }
-
-    const settings = await readJson(deploymentSettingsPath);
-    appId = settings.MicrosoftAppId;
-
-    if (!appId) {
-      if (!appPassword) {
-        console.error(`App password is required`);
-        return;
-      }
-      console.log('> Creating App Registration ...');
-      const appCreated = await this.createApp(graphClient, name, appPassword);
-      await this.writeToLog(appCreated, logFile);
-      appId = appCreated.appId;
-      console.log(`> Create App Id Success! ID: ${appId}`);
-    }
-
-    let shouldCreateAuthoringResource = true;
-    if (luisAuthoringKey) {
-      shouldCreateAuthoringResource = false;
-    }
-
-    const resourceGroupName = `${name}-${environment}`;
-
-    // timestamp will be used as deployment name
-    const timeStamp = new Date().getTime().toString();
-    const client = new ResourceManagementClient(this.creds, this.subId);
-
-    const rpres = await this.createResourceGroup(client, location, resourceGroupName);
-    await this.writeToLog(rpres, logFile);
-
-    const deploymentTemplateParam = this.getDeploymentTemplateParam(
-      appId,
-      appPassword,
-      location,
-      name,
-      shouldCreateAuthoringResource
-    );
-    await this.writeToLog(deploymentTemplateParam, logFile);
-
-    const templatePath = path.resolve(this.projFolder, 'DeploymentTemplates', 'template-with-preexisting-rg.json');
-
-    const validation = await this.validateDeployment(
-      client,
-      templatePath,
-      location,
-      resourceGroupName,
-      timeStamp,
-      deploymentTemplateParam
-    );
-    await this.writeToLog(validation, logFile);
-
-    if (validation.error) {
-      console.error(`! Template is not valid with provided parameters. Review the log for more information.`);
-      console.error(`! Error: ${validation.error.message}`);
-      console.error(`! Log: ${logFile}`);
-      console.error(`+ To delete this resource group, run 'az group delete -g ${resourceGroupName} --no-wait'`);
-      return false;
-    }
-
-    const deployment = await this.createDeployment(
-      client,
-      templatePath,
-      location,
-      resourceGroupName,
-      timeStamp,
-      deploymentTemplateParam
-    );
-    await this.writeToLog(deployment, logFile);
-    if (deployment._response.status != 200) {
-      console.error(`! Template is not valid with provided parameters. Review the log for more information.`);
-      console.error(`! Error: ${validation.error.message}`);
-      console.error(`! Log: ${logFile}`);
-      console.error(`+ To delete this resource group, run 'az group delete -g ${resourceGroupName} --no-wait'`);
-      return false;
-    }
-
-    console.log('create deployment success');
-    console.log('before updatedeployjsonfile');
-    const updateResult = await this.updateDeploymentJsonFile(
-      deploymentSettingsPath,
-      client,
-      resourceGroupName,
-      timeStamp,
-      appId,
-      appPassword
-    );
-    await this.writeToLog(updateResult, logFile);
-
-    if (!updateResult) {
-      const operations = await client.deploymentOperations.list(resourceGroupName, timeStamp);
-      if (operations) {
-        const failedOperations = operations.filter(value => value.properties.statusMessage.error !== null);
-        if (failedOperations) {
-          failedOperations.forEach(operation => {
-            switch (operation.properties.statusMessage.error.code) {
-              case 'MissingRegistrationForLocation':
-                console.log(
-                  `! Deployment failed for resource of type ${operation.properties.targetResource.resourceType}. This resource is not avaliable in the location provided.`
-                );
-                console.log(
-                  `+ Update the .\\Deployment\\Resources\\parameters.template.json file with a valid region for this resource and provide the file path in the -parametersFile parameter.`
-                );
-                break;
-              default:
-                console.log(
-                  `! Deployment failed for resource of type ${operation.properties.targetResource.resourceType}.`
-                );
-                console.log(`! Code: ${operation.properties.statusMessage.error.code}.`);
-                console.log(`! Message: ${operation.properties.statusMessage.error.message}.`);
-                break;
-            }
-          });
-        }
-      } else {
-        console.log(`! Deployment failed. Please refer to the log file for more information.`);
-        console.log(`! Log: ${logFile}`);
-      }
-    }
-    console.log('update log success');
-    console.log(`+ To delete this resource group, run 'az group delete -g ${resourceGroupName} --no-wait'`);
-  }
-
-  public async createAndDeploy(resource: CreateAndDeployResources, jobId: string, botId: string, profileName: string) {
-    const { name, location, environment, luisAuthoringKey, appId, appPassword, luisAuthoringRegion } = resource;
+    luisAuthoringRegion?: string
+  ) => {
     try {
-      await this.create(name, location, environment, luisAuthoringKey, appId, appPassword);
-      await this.deploy(name, environment, luisAuthoringKey, luisAuthoringRegion);
-      // update publishing status
-      if (this.publishingBots[botId][profileName]) {
-        const index = this.publishingBots[botId][profileName].findIndex(item => item.result.id === jobId);
-        const newHistory = {
-          status: 200,
-          ...this.publishingBots[botId][profileName][index].result,
-          message: 'Success',
-          log: this.publishingBots[botId][profileName][index].result.log + '\nPublish succeeded!',
-          endpoint: `http://${name}-${environment}.azurewebsites.net`,
-        };
-        // add into history
-        await this.addHistory(newHistory, botId, profileName);
-        // remove publishing status
-        this.publishingBots[botId][profileName]
-          .slice(0, index)
-          .concat(this.publishingBots[botId][profileName].slice(index));
+      await this.azDeployer.createAndDeploy(
+        name,
+        location,
+        environment,
+        appPassword,
+        luisAuthoringKey,
+        luisAuthoringRegion
+      );
+      // update status and history
+      const status = this.removeLoadingStatus(botId, profileName, jobId);
+      if (status) {
+        console.log(status);
+        status.status = 200;
+        status.result.message = 'Success';
+        await this.updateHistory(botId, profileName, { status: status.status, ...status.result });
       }
     } catch (error) {
-      // update error mes in history
+      console.log(error);
+      // update status and history
+      const status = this.removeLoadingStatus(botId, profileName, jobId);
+      if (status) {
+        status.status = 500;
+        status.result.message = error.message;
+        console.log(status);
+        await this.updateHistory(botId, profileName, { status: status.status, ...status.result });
+      }
     }
-  }
-
-  addHistory = async (newHistory, projectId, profileName) => {
-    if (!this.historyFilePath) {
-      this.historyFilePath = path.resolve(__dirname, 'publishHistory.txt');
-    }
-    let fileContent = await readJson(this.historyFilePath);
-    if (!fileContent) {
-      fileContent = {};
-    }
-    if (!fileContent[projectId]) {
-      fileContent[projectId] = {};
-    }
-    if (!fileContent[projectId][profileName]) {
-      fileContent[projectId][profileName] = [];
-    }
-    fileContent[projectId][profileName].push(newHistory);
-    await writeJson(this.historyFilePath, fileContent);
   };
-
-  getStatus = async (config: PublishConfig, project, user) => {
-    const profileName = config.name;
-    const botId = project.id;
-
-    return {
-      botStatus: 'unConnected',
-    };
-  };
-
-  history = async (config: PublishConfig, project, user) => {
-    const profileName = config.name;
-    const botId = project.id;
-    const histories = await readJson(this.historyFilePath);
-    if (histories && histories[botId] && histories[botId][profileName]) {
-      return histories[botId][profileName];
-    }
-    return [];
-  };
-  // rollback = async (config, versionId) => { };
   publish = async (config: PublishConfig, project, metadata, user) => {
+    const { settings, templatePath, name, customizeConfiguration } = config;
+    const { subscriptionID, environment, location, appPassword, username } = customizeConfiguration;
+    const srcBot = project.dataDir || '';
+    this.templatePath = templatePath;
+    const botId = project.id;
+    const jobId = uuid();
     try {
-      const { settings, templatePath, name } = config;
-      this.botFolder = project.dataDir || '';
-      this.runtimeFolder = templatePath;
-
-      await emptyDir(path.resolve(this.projFolder, 'ComposerDialogs'));
-      await emptyDir(path.resolve(this.projFolder, 'bin'));
-      // copy bot and runtime into projFolder
-      await copy(this.botFolder, path.resolve(this.projFolder, 'ComposerDialogs'), {
-        recursive: true,
-      });
-      const jobId = uuid();
-      // merge defaultResources, settings luis setting, and user input configuration
-      const resources: CreateAndDeployResources = { ...defaultResources, ...config };
-
-      // not await, return 202 publishing status right now
-      this.createAndDeploy(resources, jobId, project.id, name);
-
-      // save in publishingBots
-      if (!this.publishingBots[project.id]) {
-        this.publishingBots[project.id] = {};
+      // test creds, if not valid, return 500
+      if (!username) {
+        const res = {
+          status: 500,
+          id: jobId,
+          time: new Date(),
+          message: 'Publish Fail',
+          log: 'please input username to login azure cloud',
+          comment: metadata.comment,
+        };
+        // save in history
+        await this.updateHistory(botId, name, res);
       }
-      if (!this.publishingBots[project.id][name]) {
-        this.publishingBots[project.id][name] = [];
+      // create deploy instance
+      if (!this.azDeployer) {
+        const creds = new DeviceTokenCredentials('', '', username);
+        // console.log(creds);
+        this.azDeployer = new BotProjectDeploy({
+          subId: subscriptionID,
+          logger: (msg: any) => console.log(msg),
+          creds: creds,
+          projPath: this.projFolder,
+        });
       }
+      await this.init(srcBot, templatePath);
+      console.log('before create');
+      this.createAndDeploy(
+        botId,
+        name,
+        jobId,
+        customizeConfiguration.name,
+        location,
+        environment,
+        appPassword,
+        customizeConfiguration.luisAuthoringKey,
+        customizeConfiguration.luisAuthoringRegion
+      );
+
       const response = {
         status: 202,
         result: {
@@ -732,45 +207,38 @@ class BotProjectDeploy {
           comment: metadata.comment,
         },
       };
-      this.publishingBots[project.id][name].push(response);
+      this.addLoadingStatus(botId, name, response);
       return response;
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.log(err);
+      return {
+        status: 500,
+        result: {
+          id: jobId,
+          time: new Date(),
+          message: 'Publish Fail',
+          log: err.message,
+          comment: metadata.comment,
+        },
+      };
     }
+  };
+
+  getStatus = async (config: PublishConfig, project, user) => {
+    const profileName = config.name;
+    const botId = project.id;
+    // return latest status
+    return this.getLoadingStatus(botId, profileName);
+  };
+
+  history = async (config: PublishConfig, project, user) => {
+    const profileName = config.name;
+    const botId = project.id;
+    return await this.getHistory(botId, profileName);
   };
 }
 
-interface PublishConfig {
-  version: string;
-  subscriptionID: string;
-  settings: any;
-  templatePath: string;
-  name: string; //profile name
-  remoteName: string; // for create resource and deploy
-}
-
-interface CreateAndDeployResources {
-  name: string;
-  location: string;
-  environment: string;
-  luisAuthoringKey?: string;
-  luisAuthoringRegion?: string;
-  appId?: string;
-  appPassword?: string;
-}
-
-// set in the config
-const defaultResources = {
-  name: 'testComposerAzurePublish',
-  environment: 'composer',
-  location: 'westus',
-  luisAuthoringKey: null,
-  luisAuthoringRegion: 'westus',
-  appId: null,
-  appPassword: 'shuibian$TEST123',
-};
-
-const azurePublish = new BotProjectDeploy();
+const azurePublish = new AzurePublisher();
 
 export default async (composer: any): Promise<void> => {
   // pass in the custom storage class that will override the default
