@@ -41,18 +41,19 @@ class AzurePublisher {
   constructor() {
     this.projFolder = path.resolve(__dirname, '../publishBots');
     this.botFolder = path.resolve(__dirname, '../publishBots/ComposerDialogs');
-    this.historyFilePath = path.resolve(__dirname, 'publishHistory.txt');
+    this.historyFilePath = path.resolve(__dirname, '../publishHistory.txt');
     this.publishingBots = {};
   }
 
   private init = async (srcBot: string, srcTemplate: string) => {
-    await emptyDir(this.botFolder);
-    await emptyDir(path.resolve(this.projFolder, 'bin')); // empty the release bot
+    // await emptyDir(this.botFolder);
+    // await emptyDir(path.resolve(this.projFolder, 'bin')); // empty the release bot
+    await emptyDir(this.projFolder);
     // copy bot and runtime into projFolder
     await copy(srcBot, this.botFolder, {
       recursive: true,
     });
-    // await copy(srcTemplate, this.projFolder);
+    await copy(srcTemplate, this.projFolder);
   };
   private getHistory = async (botId: string, profileName: string) => {
     if (await pathExists(this.historyFilePath)) {
@@ -60,8 +61,8 @@ class AzurePublisher {
       if (histories && histories[botId] && histories[botId][profileName]) {
         return histories[botId][profileName];
       }
-      return [];
     }
+    return [];
   };
   private updateHistory = async (botId: string, profileName: string, newHistory: any) => {
     let histories = {};
@@ -98,10 +99,22 @@ class AzurePublisher {
     }
     return;
   };
-  private getLoadingStatus = (botId: string, profileName: string) => {
+  private getLoadingStatus = async (botId: string, profileName: string) => {
     if (this.publishingBots[botId] && this.publishingBots[botId][profileName]) {
       // get current status
-      return this.publishingBots[botId][profileName][this.publishingBots[botId][profileName].length - 1];
+      console.log(this.publishingBots[botId][profileName]);
+      if (this.publishingBots[botId][profileName].length > 0) {
+        return this.publishingBots[botId][profileName][this.publishingBots[botId][profileName].length - 1];
+      } else {
+        return (
+          (await this.getHistory(botId, profileName)[0]) || {
+            status: 404,
+            result: {
+              message: 'bot not published',
+            },
+          }
+        );
+      }
     } else {
       return {
         status: 404,
@@ -145,7 +158,7 @@ class AzurePublisher {
       const status = this.removeLoadingStatus(botId, profileName, jobId);
       if (status) {
         status.status = 500;
-        status.result.message = error.message;
+        status.result.message = error ? error.message : 'publish error';
         console.log(status);
         await this.updateHistory(botId, profileName, { status: status.status, ...status.result });
       }
@@ -228,7 +241,7 @@ class AzurePublisher {
     const profileName = config.name;
     const botId = project.id;
     // return latest status
-    return this.getLoadingStatus(botId, profileName);
+    return await this.getLoadingStatus(botId, profileName);
   };
 
   history = async (config: PublishConfig, project, user) => {
