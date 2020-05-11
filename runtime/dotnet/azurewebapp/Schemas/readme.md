@@ -36,13 +36,13 @@ bf plugins:install @microsoft/bf-dialog
 ##  Adding Custom Actions to your Composer bot
 **NOTE: These steps assume you are using azurewebapp as your deployment solution. Just replace azurewebapp with azurefunctions if using azurefunctions for deployment
 **
-- Navigate to the solution file inside the `runtime` folder for `azurewebapp`
+- Navigate to the solution file inside the `runtime` (./runtime/azurewebapp) folder for `azurewebapp`
 
 - Add your customAction class to the `CustomizedActions` folder and your partial schema file (.schema) that has your declarative custom action inside the `Schemas` folder
 
 - Register your custom action inside Startup.cs
 
-- Navigate to to the `Schemas` folder inside azurewebapp and run the command `sh update.sh`
+- Navigate to to the `Schemas` (./runtime/azurewebapp/Schemas) folder inside azurewebapp and run the command `sh update.sh`
 
 - Validate that your partial schema has been appended inside sdk.schema file
 
