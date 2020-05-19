@@ -57,7 +57,7 @@ export const navToTest: ActionCreator = ({ getState, dispatch }, dialogId, bread
     if (item.id == dialogId) {
       dispatch({
         type: ActionTypes.SET_TEST_PARAMS,
-        payload: { isTestFolder: true, testPath: item.lgFile },
+        payload: { isTestFolder: !!item.luFile, testPath: item.lgFile },
       });
       return true;
     }

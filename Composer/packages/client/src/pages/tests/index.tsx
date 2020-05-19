@@ -94,6 +94,7 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
 
   function handleSelect(id, selected = '') {
     if (selected) {
+      throw 'should never happen';
       selectToTest(selected);
     } else {
       navToTest(id);

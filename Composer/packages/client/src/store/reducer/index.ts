@@ -86,36 +86,53 @@ const initLuFilesStatus = (botName: string, luFiles: LuFile[], dialogs: DialogIn
 };
 
 const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
-  const folderFile = new Map<string, DialogInfo>();
+  const folders = new Map<string, string[]>();
+  const dialogs: DialogInfo[] = [];
   testFiles.forEach(element => {
+    // TODO: only one level of folder now
     const parts = element.path.substr(testDir.length + 1).split('/');
-    if (!folderFile.has(parts[0])) {
-      const dialog = {
-        content: JSON.parse(element.content),
-        diagnostics: [],
-        displayName: parts[0],
-        id: parts[0],
-        isRoot: folderFile.size == 0,
-        lgFile: testDir + '/' + parts[0],
-        lgTemplates: [],
-        luFile: '',
-        referredLuIntents: [],
-        referredDialogs: [],
-        triggers: [],
-        intentTriggers: [],
-      };
-      folderFile.set(parts[0], dialog);
-    }
-    const trigger = {
-      id: element.name,
+    const dialog = {
+      content: JSON.parse(element.content),
+      diagnostics: [],
       displayName: element.name,
-      isIntent: false,
-      type: element.path,
+      id: element.name,
+      isRoot: dialogs.length == 0,
+      // TODO: use this as testPath
+      lgFile: element.path,
+      lgTemplates: [],
+      // TODO: use this as isTestFolder
+      luFile: '',
+      referredLuIntents: [],
+      referredDialogs: [],
+      triggers: [],
+      intentTriggers: [],
     };
-    const dialog = folderFile.get(parts[0]);
-    if (dialog) dialog.triggers.push(trigger);
+    dialogs.push(dialog);
+    if (!folders.has(parts[0])) {
+      folders.set(parts[0], []);
+    }
+    folders.get(parts[0])?.push(element.name);
   });
-  return Array.from(folderFile.values());
+  folders.forEach((files, folder) => {
+    const dialog = {
+      content: JSON.parse(JSON.stringify(files)),
+      diagnostics: [],
+      displayName: folder,
+      id: folder,
+      isRoot: dialogs.length == 0,
+      // TODO: use this as testPath
+      lgFile: testDir + '/' + folder,
+      lgTemplates: [],
+      // TODO: use this as isTestFolder
+      luFile: 'true',
+      referredLuIntents: [],
+      referredDialogs: [],
+      triggers: [],
+      intentTriggers: [],
+    };
+    dialogs.push(dialog);
+  });
+  return dialogs;
 };
 
 const getProjectSuccess: ReducerFunc = (state, { response }) => {

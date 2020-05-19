@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 import * as fs from 'fs';
-
 import { execSync } from 'child_process';
+
 import { Request, Response } from 'express';
 import { Archiver } from 'archiver';
 import { PluginLoader } from '@bfc/plugin-loader';
