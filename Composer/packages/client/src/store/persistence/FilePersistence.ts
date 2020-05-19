@@ -165,7 +165,7 @@ class FilePersistence {
   private _getDialogFileChanges(id: string, previousState: State, currentState: State, changeType: ChangeType) {
     const projectId = currentState.projectId;
     const fileChanges: IFileChange[] = [];
-    let { dialogs, luFiles, lgFiles } = currentState;
+    let { dialogs, luFiles, lgFiles, testDialogs } = currentState;
 
     //if delete dialog the change need to get changes from previousState
     if (changeType === ChangeType.DELETE) {
@@ -187,7 +187,10 @@ class FilePersistence {
           fileChanges.push(this._createChange(lg, FileExtensions.Lg, changeType, projectId));
         });
     }
-    const dialog = dialogs.find(dialog => dialog.id === id);
+    const dialog = dialogs.find(dialog => dialog.id === id) || testDialogs.find(dialog => dialog.id === id);
+    if (!dialog) {
+      return fileChanges;
+    }
     fileChanges.push(this._createChange(dialog, FileExtensions.Dialog, changeType, projectId));
     return fileChanges;
   }
@@ -203,6 +206,7 @@ class FilePersistence {
     const { luFiles } = currentState;
 
     const lu = luFiles.find(lu => lu.id === id);
+    if (!lu) return fileChanges;
     fileChanges.push(this._createChange(lu, FileExtensions.Lu, changeType, projectId));
     return fileChanges;
   }
@@ -218,6 +222,7 @@ class FilePersistence {
     const { lgFiles } = currentState;
 
     const lg = lgFiles.find(lg => lg.id === id);
+    if (!lg) return fileChanges;
     fileChanges.push(this._createChange(lg, FileExtensions.Lg, changeType, projectId));
     return fileChanges;
   }

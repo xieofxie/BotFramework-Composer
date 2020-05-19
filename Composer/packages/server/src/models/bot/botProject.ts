@@ -62,7 +62,7 @@ export class BotProject {
   public dir: string;
   public dataDir: string;
   public files: FileInfo[] = [];
-  public testDir: string = '';
+  public testDir = '';
   public testFiles: FileInfo[] = [];
   public fileStorage: IFileStorage;
   public luPublisher: LuPublisher;
@@ -256,7 +256,7 @@ export class BotProject {
       await this.updateDefaultSlotEnvSettings(JSON.parse(content));
       return new Date().toDateString();
     }
-    const file = this.files.find(d => d.name === name);
+    const file = this.files.find(d => d.name === name) || this.testFiles.find(d => d.name === name);
     if (file === undefined) {
       throw new Error(`no such file ${name}`);
     }
@@ -478,7 +478,10 @@ export class BotProject {
   // update file in this project this function will gurantee the memory cache
   // (this.files, all indexes) also gets updated
   private _updateFile = async (relativePath: string, content: string) => {
-    const index = this.files.findIndex(f => f.relativePath === relativePath);
+    let index = this.files.findIndex(f => f.relativePath === relativePath);
+    if (index == -1) {
+      index = this.testFiles.findIndex(f => f.relativePath === relativePath);
+    }
     if (index === -1) {
       throw new Error(`no such file at ${relativePath}`);
     }

@@ -89,13 +89,16 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
   const folders = new Map<string, string[]>();
   const dialogs: DialogInfo[] = [];
   testFiles.forEach(element => {
-    // TODO: only one level of folder now
-    const parts = element.path.substr(testDir.length + 1).split('/');
+    const remain = element.path.substr(testDir.length + 1);
+    let index = remain.lastIndexOf('/');
+    const folder = remain.substr(0, index);
+    index = element.name.lastIndexOf('.');
+    const file = element.name.substr(0, index);
     const dialog = {
       content: JSON.parse(element.content),
       diagnostics: [],
-      displayName: element.name,
-      id: element.name,
+      displayName: file,
+      id: file,
       isRoot: dialogs.length == 0,
       // TODO: use this as testPath
       lgFile: element.path,
@@ -108,10 +111,10 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
       intentTriggers: [],
     };
     dialogs.push(dialog);
-    if (!folders.has(parts[0])) {
-      folders.set(parts[0], []);
+    if (!folders.has(folder)) {
+      folders.set(folder, []);
     }
-    folders.get(parts[0])?.push(element.name);
+    folders.get(folder)?.push(file);
   });
   folders.forEach((files, folder) => {
     const dialog = {
@@ -294,12 +297,23 @@ const updateLuTemplate: ReducerFunc = (state, luFile: LuFile) => {
 };
 
 const updateDialog: ReducerFunc = (state, { id, content }) => {
+  let found = false;
   state.dialogs = state.dialogs.map(dialog => {
     if (dialog.id === id) {
+      found = true;
       return { ...dialog, ...dialogIndexer.parse(dialog.id, content, state.schemas.sdk.content) };
     }
     return dialog;
   });
+  if (!found) {
+    state.testDialogs = state.testDialogs.map(dialog => {
+      if (dialog.id === id) {
+        found = true;
+        return { ...dialog, content };
+      }
+      return dialog;
+    });
+  }
   return state;
 };
 

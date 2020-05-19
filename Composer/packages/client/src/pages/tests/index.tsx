@@ -160,7 +160,9 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
                     key={'testdialogjson'}
                     id={currentDialog.id}
                     onChange={data => {
-                      //actions.updateDialog({ id: currentDialog.id, projectId, content: data });
+                      if (!currentDialog.luFile) {
+                        actions.updateDialog({ id: currentDialog.id, projectId, content: data });
+                      }
                     }}
                     value={currentDialog.content || undefined}
                     schema={schemas.sdk.content}
