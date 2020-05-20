@@ -69,15 +69,18 @@ export const publishToTarget: ActionCreator = async ({ dispatch }, projectId, ta
   }
 };
 
-export const testTarget: ActionCreator = async ({ getState, dispatch }, projectId, target) => {
+export const testTarget: ActionCreator = async ({ getState, dispatch }, projectId, dialogId, target) => {
   try {
     const state = getState();
+    const dialog = state.testDialogs.find(dialog => {
+      return dialog.id == dialogId;
+    });
     const response = await httpClient.post(`/projects/${projectId}/test`, {
-      isTestFolder: state.isTestFolder,
-      testPath: state.testPath,
+      isTestFolder: !!dialog?.luFile,
+      testPath: dialog?.lgFile,
     });
     dispatch({
-      type: ActionTypes.PUBLISH_FAILED,
+      type: ActionTypes.TEST_FINISHED,
       payload: {
         error: response.data,
         target: target,
@@ -85,7 +88,7 @@ export const testTarget: ActionCreator = async ({ getState, dispatch }, projectI
     });
   } catch (err) {
     dispatch({
-      type: ActionTypes.PUBLISH_FAILED,
+      type: ActionTypes.TEST_FINISHED,
       payload: {
         error: err.response.data,
         target: target,

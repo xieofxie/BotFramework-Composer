@@ -460,12 +460,6 @@ const setDesignPageLocation: ReducerFunc = (
   return state;
 };
 
-const setTestParams: ReducerFunc = (state, { isTestFolder, testPath }) => {
-  state.isTestFolder = isTestFolder;
-  state.testPath = testPath;
-  return state;
-};
-
 const updateSkill: ReducerFunc = (state, { skills }) => {
   state.skills = skills;
   state.settings.skill = skills.map(({ manifestUrl, name }) => {
@@ -598,6 +592,15 @@ const publishFailure: (title: string) => ReducerFunc = title => (state, { error,
     state.publishHistory[target.name] = [];
   }
   state.publishHistory[target.name].unshift(error);
+  return state;
+};
+
+const testFinished: ReducerFunc = (state, { error, target }) => {
+  if (target.name === 'default') {
+    state.botStatus = BotStatus.failed;
+
+    state.botLoadErrorMsg = { ...error, title: Text.TESTFINISHED };
+  }
   return state;
 };
 
@@ -791,5 +794,5 @@ export const reducer = createReducer({
   [ActionTypes.SET_APP_UPDATE_STATUS]: setAppUpdateStatus,
   [ActionTypes.DISPLAY_SKILL_MANIFEST_MODAL]: displaySkillManifestModal,
   [ActionTypes.DISMISS_SKILL_MANIFEST_MODAL]: dismissSkillManifestModal,
-  [ActionTypes.SET_TEST_PARAMS]: setTestParams,
+  [ActionTypes.TEST_FINISHED]: testFinished,
 });

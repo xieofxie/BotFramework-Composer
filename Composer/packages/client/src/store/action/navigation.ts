@@ -52,17 +52,6 @@ export const navToTest: ActionCreator = ({ getState, dispatch }, dialogId, bread
   if (checkUrl(currentUri, state.designPageLocation)) return;
   //if dialog change we should flush some debounced functions
   navigateTo(currentUri, { state: { breadcrumb } });
-
-  state.testDialogs.find((item, index) => {
-    if (item.id == dialogId) {
-      dispatch({
-        type: ActionTypes.SET_TEST_PARAMS,
-        payload: { isTestFolder: !!item.luFile, testPath: item.lgFile },
-      });
-      return true;
-    }
-    return false;
-  });
 };
 
 export const selectToTest: ActionCreator = ({ getState, dispatch }, selectPath) => {
@@ -80,20 +69,6 @@ export const selectToTest: ActionCreator = ({ getState, dispatch }, selectPath) 
 
   if (checkUrl(currentUri, state.designPageLocation)) return;
   navigateTo(currentUri, { state: { breadcrumb: updateBreadcrumb(breadcrumb, BreadcrumbUpdateType.Selected) } });
-
-  state.testDialogs.find((item, index) => {
-    if (item.id == dialogId) {
-      const trigger = get(item, selectPath);
-      if (trigger != null) {
-        dispatch({
-          type: ActionTypes.SET_TEST_PARAMS,
-          payload: { isTestFolder: false, testPath: trigger.type },
-        });
-        return true;
-      }
-    }
-    return false;
-  });
 };
 
 export const focusTo: ActionCreator = ({ getState }, focusPath, fragment) => {

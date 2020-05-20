@@ -19,6 +19,7 @@ import { ToolBar } from '../../components/ToolBar/index';
 import { clearBreadcrumb } from '../../utils/navigation';
 import { navigateTo } from '../../utils';
 import { contentWrapper, editorContainer, editorWrapper, pageRoot, visualPanel } from '../design/styles';
+import { PropertyEditor } from '../design/PropertyEditor';
 
 const getTabFromFragment = () => {
   const tab = window.location.hash.substring(1);
@@ -30,7 +31,7 @@ const getTabFromFragment = () => {
 
 const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: string }>> = props => {
   const { state, actions } = useContext(StoreContext);
-  const { testDialogs, breadcrumb, projectId, schemas, designPageLocation } = state;
+  const { testDialogs, breadcrumb, projectId, schemas, focusPath, designPageLocation } = state;
   const {
     setDesignPageLocation,
     navToTest,
@@ -110,7 +111,7 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
   const toolbarItems = [
     {
       type: 'element',
-      element: <TestsController />,
+      element: <TestsController dialogId={currentDialog.id} />,
       align: 'right',
     },
   ];
@@ -169,6 +170,7 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
                   />
                 }
               </div>
+              <PropertyEditor key={focusPath} />
             </div>
           </Conversation>
         </div>

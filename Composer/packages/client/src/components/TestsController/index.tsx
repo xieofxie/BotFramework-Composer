@@ -8,16 +8,21 @@ import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import formatMessage from 'format-message';
 
 import { bot, botButton } from '../TestController/styles';
-import { ErrorCallout } from '../TestController/errorCallout';
-import { Loading } from '../TestController/loading';
+import { ResultCallout } from './resultCallout';
+import { Waiting } from './waiting';
 import { ErrorInfo } from '../TestController/errorInfo';
 
 import { BotStatus, DefaultPublishConfig } from './../../constants';
 import useNotifications from './../../pages/notifications/useNotifications';
 import { StoreContext } from './../../store';
 
-export const TestsController: React.FC = () => {
+interface ITestsControllerProps {
+  dialogId: string;
+}
+
+export const TestsController: React.FC<ITestsControllerProps> = props => {
   const { state, actions } = useContext(StoreContext);
+  const { dialogId } = props;
   const [] = useState(false);
   const [calloutVisible, setCalloutVisible] = useState(false);
   const botActionRef = useRef(null);
@@ -55,7 +60,7 @@ export const TestsController: React.FC = () => {
 
   async function handleTestBot() {
     setBotStatus(BotStatus.reloading);
-    await testTarget(projectId, DefaultPublishConfig);
+    await testTarget(projectId, dialogId, DefaultPublishConfig);
   }
 
   async function handleStart() {
@@ -71,10 +76,10 @@ export const TestsController: React.FC = () => {
         <div
           aria-live={'assertive'}
           aria-label={formatMessage(`{ botStatus}`, {
-            botStatus: publishing ? 'Publishing' : reloading ? 'Reloading' : '',
+            botStatus: publishing ? 'Publishing' : reloading ? 'Testing' : '',
           })}
         />
-        <Loading botStatus={botStatus} />
+        <Waiting botStatus={botStatus} />
         <div ref={addRef}>
           <ErrorInfo hidden={!showError} onClick={handleErrorButtonClick} count={errorLength} />
           <PrimaryButton
@@ -86,7 +91,7 @@ export const TestsController: React.FC = () => {
           />
         </div>
       </div>
-      <ErrorCallout
+      <ResultCallout
         onDismiss={dismissCallout}
         onTry={handleStart}
         target={botActionRef.current}

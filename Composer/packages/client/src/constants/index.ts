@@ -103,7 +103,7 @@ export enum ActionTypes {
   REMOVE_SKILL_MANIFEST = 'REMOVE_SKILL_MANIFEST',
   DISPLAY_SKILL_MANIFEST_MODAL = 'DISPLAY_SKILL_MANIFEST_MODAL',
   DISMISS_SKILL_MANIFEST_MODAL = 'DISMISS_SKILL_MANIFEST_MODAL',
-  SET_TEST_PARAMS = 'SET_TEST_PARAMS',
+  TEST_FINISHED = 'TEST_FINISHED',
 }
 
 export const Tips = {
@@ -130,6 +130,7 @@ export const Text = {
   LUISDEPLOYFAILURE: formatMessage('Sorry, something went wrong with publishing. Try again or exit out of this task.'),
   CONNECTBOTFAILURE: formatMessage('Sorry, something went wrong with connecting bot runtime'),
   DOTNETFAILURE: formatMessage('Composer needs .NET Core SDK'),
+  TESTFINISHED: formatMessage('Test result is:'),
 };
 
 export enum LuisConfig {
