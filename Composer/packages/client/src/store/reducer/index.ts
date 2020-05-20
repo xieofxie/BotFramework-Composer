@@ -118,7 +118,7 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
   });
   folders.forEach((files, folder) => {
     const dialog = {
-      content: JSON.parse(JSON.stringify(files)),
+      content: JSON.parse('{"message":"will run all tests in this folder"}'),
       diagnostics: [],
       displayName: folder,
       id: folder,

@@ -15,6 +15,7 @@ import { LocationRef } from '../models/bot/interface';
 import { getSkillByUrl } from '../models/bot/skillManager';
 import StorageService from '../services/storage';
 import settings from '../settings';
+import { Tester } from '../constants';
 
 import { Path } from './../utility/path';
 
@@ -259,12 +260,9 @@ async function runTest(req: Request, res: Response) {
 
   const currentProject = await BotProjectService.getProjectById(projectId, user);
   if (currentProject !== undefined) {
-    const tester = '';
-    let cmd = '';
+    let cmd = `${Tester} --autoDetect true --botFolder ${currentProject.dir} --testFolder ${currentProject.testDir} --testSubFolder ${req.body.testPath}`;
     if (req.body.isTestFolder) {
-      cmd = `${tester} --autoDetect true --testSubFolder ${req.body.testPath}`;
     } else {
-      cmd = `${tester} --autoDetect true --pattern ${req.body.testPath}`;
     }
 
     try {
