@@ -3,11 +3,12 @@
 
 /** @jsx jsx */
 import { jsx } from '@emotion/core';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { Suspense, useContext, useEffect, useState } from 'react';
 import { globalHistory, RouteComponentProps } from '@reach/router';
 import { PromptTab } from '@bfc/shared';
-import { SDKKinds, DialogInfo } from '@bfc/shared';
+import { DialogFactory, SDKKinds, DialogInfo } from '@bfc/shared';
 import { JsonEditor } from '@bfc/code-editor';
+import formatMessage from 'format-message';
 
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { TestsController } from '../../components/TestsController';
@@ -20,6 +21,8 @@ import { clearBreadcrumb } from '../../utils/navigation';
 import { navigateTo } from '../../utils';
 import { contentWrapper, editorContainer, editorWrapper, pageRoot, visualPanel } from '../design/styles';
 import { PropertyEditor } from '../design/PropertyEditor';
+
+const CreateTestModal = React.lazy(() => import('./createTestModal'));
 
 const getTabFromFragment = () => {
   const tab = window.location.hash.substring(1);
@@ -110,6 +113,17 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
 
   const toolbarItems = [
     {
+      type: 'action',
+      text: formatMessage('Add'),
+      buttonProps: {
+        iconProps: {
+          iconName: 'Add',
+        },
+        onClick: () => actions.createDialogBegin([], onCreateDialogComplete),
+      },
+      align: 'left',
+    },
+    {
       type: 'element',
       element: <TestsController dialogId={currentDialog.id} />,
       align: 'right',
@@ -121,6 +135,22 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
       const { dialogId, selected, focused, index } = item;
       setectAndfocus(dialogId, selected, focused, clearBreadcrumb(breadcrumb, index));
     }
+  }
+
+  async function handleCreateDialogSubmit(data: { name: string; description: string }) {
+    let name = data.name;
+    let index = name.lastIndexOf('/');
+    if (index != -1) {
+      name = name.substr(index + 1);
+    }
+
+    const seededContent = {
+      $schema: "https://raw.githubusercontent.com/microsoft/BotFramework-Composer/stable/Composer/packages/server/schemas/sdk.schema",
+      $kind: "Microsoft.Test.Script",
+      description: data.description,
+    };
+
+    await actions.createTest({ id: name, name: data.name, content: seededContent });
   }
 
   async function handleDeleteDialog() {}
@@ -175,6 +205,15 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
           </Conversation>
         </div>
       </div>
+      <Suspense fallback={<LoadingSpinner />}>
+        {state.showCreateDialogModal && (
+          <CreateTestModal
+            isOpen={state.showCreateDialogModal}
+            onDismiss={() => actions.createDialogCancel()}
+            onSubmit={handleCreateDialogSubmit}
+          />
+        )}
+      </Suspense>
     </React.Fragment>
   );
 };

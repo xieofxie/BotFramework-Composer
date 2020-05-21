@@ -45,6 +45,7 @@ export enum ActionTypes {
   GET_TEMPLATE_PROJECTS_FAILURE = 'GET_TEMPLATE_PROJECTS_FAILURE',
   CREATE_DIALOG_BEGIN = 'CREATE_DIALOG_BEGIN',
   CREATE_DIALOG_CANCEL = 'CREATE_DIALOG_CANCEL',
+  CREATE_TEST = 'CREATE_TEST',
   CREATE_DIALOG = 'CREATE_DIALOG',
   UPDATE_DIALOG = 'UPDATE_DIALOG',
   REMOVE_DIALOG = 'REMOVE_DIALOG',
@@ -191,6 +192,12 @@ export const DialogCreationCopy = {
     title: formatMessage('Define conversation objective'),
     subText: formatMessage(
       `What can the user accomplish through this conversation? For example, BookATable, OrderACoffee etc.`
+    ),
+  },
+  DEFINE_TEST_OBJECTIVE: {
+    title: formatMessage('Define test objective'),
+    subText: formatMessage(
+      `What can the user accomplish through this test?`
     ),
   },
   SELECT_LOCATION: {

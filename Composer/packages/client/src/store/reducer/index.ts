@@ -338,6 +338,20 @@ const createDialogCancel: ReducerFunc = state => {
   return state;
 };
 
+const createTest: ReducerFunc = (state, { id, name, content }) => {
+  // const fixedContent = autofixReferInDialog(id, content);
+  // const dialog = {
+  //   isRoot: false,
+  //   displayName: id,
+  //   ...dialogIndexer.parse(id, fixedContent, state.schemas.sdk.content),
+  // };
+  // state.testDialogs.push(dialog);
+  state.showCreateDialogModal = false;
+  state.actionsSeed = [];
+  delete state.onCreateDialogComplete;
+  return state;
+};
+
 const createDialog: ReducerFunc = (state, { id, content }) => {
   const fixedContent = autofixReferInDialog(id, content);
   const dialog = {
@@ -739,6 +753,7 @@ export const reducer = createReducer({
   [ActionTypes.GET_TEMPLATE_PROJECTS_FAILURE]: noOp,
   [ActionTypes.CREATE_DIALOG_BEGIN]: createDialogBegin,
   [ActionTypes.CREATE_DIALOG_CANCEL]: createDialogCancel,
+  [ActionTypes.CREATE_TEST]: createTest,
   [ActionTypes.CREATE_DIALOG]: createDialog,
   [ActionTypes.UPDATE_DIALOG]: updateDialog,
   [ActionTypes.REMOVE_DIALOG]: removeDialog,

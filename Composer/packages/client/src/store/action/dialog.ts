@@ -13,6 +13,17 @@ export const removeDialog: ActionCreator = (store, id) => {
   });
 };
 
+export const createTest: ActionCreator = async (store, { id, content }) => {
+  const onCreateDialogComplete = store.getState().onCreateDialogComplete;
+  if (typeof onCreateDialogComplete === 'function') {
+    setTimeout(() => onCreateDialogComplete(id));
+  }
+  store.dispatch({
+    type: ActionTypes.CREATE_TEST,
+    payload: { id, content },
+  });
+};
+
 export const createDialog: ActionCreator = async (store, { id, content }) => {
   const onCreateDialogComplete = store.getState().onCreateDialogComplete;
   if (typeof onCreateDialogComplete === 'function') {
