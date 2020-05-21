@@ -54,7 +54,7 @@ function sortDialog(dialogs: DialogInfo[]) {
     } else if (y.isRoot) {
       return 1;
     } else {
-      return 0;
+      return x.id < y.id ? -1 : 1;
     }
   });
 }

@@ -86,12 +86,15 @@ const initLuFilesStatus = (botName: string, luFiles: LuFile[], dialogs: DialogIn
 };
 
 const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
+  // TODO: . is not supported
+  const root = '[Root]';
   const folders = new Map<string, string[]>();
+  folders.set(root, []);
   const dialogs: DialogInfo[] = [];
   testFiles.forEach(element => {
     // TODO: trick for path
     const remain = element.path.substr(testDir.length + 1).replace('/', '-');
-    let folder = '';
+    let folder = root;
     let index = remain.lastIndexOf('-');
     if (index != -1) {
       folder = remain.substr(0, index);
@@ -103,7 +106,7 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
       diagnostics: [],
       displayName: file,
       id: file,
-      isRoot: dialogs.length == 0,
+      isRoot: false,
       lgFile: '',
       lgTemplates: [],
       // TODO: use this as isTestFolder
@@ -120,13 +123,12 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
     folders.get(folder)?.push(file);
   });
   folders.forEach((files, folder) => {
-    if (folder == '') return;
     const dialog = {
       content: JSON.parse('{"message":"Will run all tests in this folder"}'),
       diagnostics: [],
       displayName: folder,
       id: folder,
-      isRoot: dialogs.length == 0,
+      isRoot: folder == root,
       lgFile: '',
       lgTemplates: [],
       // TODO: use this as isTestFolder

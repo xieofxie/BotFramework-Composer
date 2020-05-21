@@ -262,7 +262,8 @@ async function runTest(req: Request, res: Response) {
   if (currentProject !== undefined) {
     let cmd = `${Tester} --autoDetect true --botFolder ${currentProject.dir} --testFolder ${currentProject.testDir}`;
     if (req.body.isTestFolder) {
-      const testPath = currentProject.testDir + '/' + req.body.testPath;
+      const testPath =
+        req.body.testPath == '[Root]' ? currentProject.testDir : currentProject.testDir + '/' + req.body.testPath;
       cmd += ` --testSubFolder ${testPath}`;
     } else {
       const testPath = currentProject.testDir + '/' + req.body.testPath + '.dialog';
