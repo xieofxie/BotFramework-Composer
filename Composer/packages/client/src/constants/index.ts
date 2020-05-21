@@ -197,7 +197,7 @@ export const DialogCreationCopy = {
   DEFINE_TEST_OBJECTIVE: {
     title: formatMessage('Define test objective'),
     subText: formatMessage(
-      `What can the user accomplish through this test?`
+      `What can the user accomplish through this test? Use - instead of / for folders.`
     ),
   },
   SELECT_LOCATION: {

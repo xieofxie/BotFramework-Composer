@@ -139,9 +139,8 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
 
   async function handleCreateDialogSubmit(data: { name: string; description: string }) {
     let name = data.name;
-    let index = name.lastIndexOf('/');
-    if (index != -1) {
-      name = name.substr(index + 1);
+    if (!name.endsWith('.mock') && !name.endsWith('.test')) {
+      name += '.test';
     }
 
     const seededContent = {
@@ -150,7 +149,7 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
       description: data.description,
     };
 
-    await actions.createTest({ id: name, name: data.name, content: seededContent });
+    await actions.createTest({ id: name, content: seededContent });
   }
 
   async function handleDeleteDialog() {}

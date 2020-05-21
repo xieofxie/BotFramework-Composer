@@ -12,6 +12,7 @@ import * as client from './http';
 import { IFileChange, ChangeType, FileExtensions } from './types';
 
 const actionType2ChangeType = {
+  [ActionTypes.CREATE_TEST]: { changeType: ChangeType.CREATE, fileExtension: FileExtensions.Dialog },
   [ActionTypes.CREATE_DIALOG]: { changeType: ChangeType.CREATE, fileExtension: FileExtensions.Dialog },
   [ActionTypes.UPDATE_DIALOG]: { changeType: ChangeType.UPDATE, fileExtension: FileExtensions.Dialog },
   [ActionTypes.REMOVE_DIALOG]: { changeType: ChangeType.DELETE, fileExtension: FileExtensions.Dialog },

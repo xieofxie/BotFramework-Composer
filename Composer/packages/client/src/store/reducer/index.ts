@@ -341,14 +341,24 @@ const createDialogCancel: ReducerFunc = state => {
   return state;
 };
 
-const createTest: ReducerFunc = (state, { id, name, content }) => {
-  // const fixedContent = autofixReferInDialog(id, content);
-  // const dialog = {
-  //   isRoot: false,
-  //   displayName: id,
-  //   ...dialogIndexer.parse(id, fixedContent, state.schemas.sdk.content),
-  // };
-  // state.testDialogs.push(dialog);
+const createTest: ReducerFunc = (state, { id, content }) => {
+  const file = id;
+  const dialog = {
+    content: JSON.parse(JSON.stringify(content)),
+    diagnostics: [],
+    displayName: file,
+    id: file,
+    isRoot: false,
+    lgFile: '',
+    lgTemplates: [],
+    // TODO: use this as isTestFolder
+    luFile: '',
+    referredLuIntents: [],
+    referredDialogs: [],
+    triggers: [],
+    intentTriggers: [],
+  };
+  state.testDialogs.push(dialog);
   state.showCreateDialogModal = false;
   state.actionsSeed = [];
   delete state.onCreateDialogComplete;

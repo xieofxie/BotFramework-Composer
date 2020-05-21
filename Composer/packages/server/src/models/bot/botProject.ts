@@ -280,6 +280,20 @@ export class BotProject {
   };
 
   public createFile = async (name: string, content = '', dir: string = this.defaultDir(name)) => {
+    if (name.endsWith('.test.dialog') || name.endsWith('.mock.dialog')) {
+      let fileName = name;
+      const index = fileName.lastIndexOf('-');
+      if (index != -1) {
+        fileName = name.substr(index + 1);
+      }
+      const file = this.testFiles.find(d => d.name === fileName);
+      if (file) {
+        throw new Error(`${name} dialog already exist`);
+      }
+      const relativePath = name.replace('-', '/');
+      return await this._createTestFile(relativePath, content);
+    }
+
     const file = this.files.find(d => d.name === name);
     if (file) {
       throw new Error(`${name} dialog already exist`);
@@ -448,6 +462,20 @@ export class BotProject {
       );
     }
     return dir;
+  };
+
+  private _createTestFile = async (relativePath: string, content: string) => {
+    const absolutePath = Path.resolve(this.testDir, relativePath);
+    await this.ensureDirExists(Path.dirname(absolutePath));
+    debug('Creating test file: %s', absolutePath);
+    await this.fileStorage.writeFile(absolutePath, content);
+
+    const file = await this._getFileInfo(absolutePath);
+    if (file) {
+      // update this.files which is memory cache of all files
+      this.testFiles.push(file);
+    }
+    return file;
   };
 
   // create a file with relativePath and content relativePath is a path relative
