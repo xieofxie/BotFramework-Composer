@@ -89,19 +89,22 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
   const folders = new Map<string, string[]>();
   const dialogs: DialogInfo[] = [];
   testFiles.forEach(element => {
-    const remain = element.path.substr(testDir.length + 1);
-    let index = remain.lastIndexOf('/');
-    const folder = remain.substr(0, index);
-    index = element.name.lastIndexOf('.');
-    const file = element.name.substr(0, index);
+    // TODO: trick for path
+    const remain = element.path.substr(testDir.length + 1).replace('/', '-');
+    let folder = '';
+    let index = remain.lastIndexOf('-');
+    if (index != -1) {
+      folder = remain.substr(0, index);
+    }
+    index = remain.lastIndexOf('.');
+    const file = remain.substr(0, index);
     const dialog = {
       content: JSON.parse(element.content),
       diagnostics: [],
       displayName: file,
       id: file,
       isRoot: dialogs.length == 0,
-      // TODO: use this as testPath
-      lgFile: element.path,
+      lgFile: '',
       lgTemplates: [],
       // TODO: use this as isTestFolder
       luFile: '',
@@ -117,14 +120,14 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
     folders.get(folder)?.push(file);
   });
   folders.forEach((files, folder) => {
+    if (folder == '') return;
     const dialog = {
-      content: JSON.parse('{"message":"will run all tests in this folder"}'),
+      content: JSON.parse('{"message":"Will run all tests in this folder"}'),
       diagnostics: [],
       displayName: folder,
       id: folder,
       isRoot: dialogs.length == 0,
-      // TODO: use this as testPath
-      lgFile: testDir + '/' + folder,
+      lgFile: '',
       lgTemplates: [],
       // TODO: use this as isTestFolder
       luFile: 'true',

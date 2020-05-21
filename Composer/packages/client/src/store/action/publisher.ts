@@ -77,7 +77,8 @@ export const testTarget: ActionCreator = async ({ getState, dispatch }, projectI
     });
     const response = await httpClient.post(`/projects/${projectId}/test`, {
       isTestFolder: !!dialog?.luFile,
-      testPath: dialog?.lgFile,
+      // TODO: trick for path
+      testPath: dialog?.id.replace('-', '/'),
     });
     dispatch({
       type: ActionTypes.TEST_FINISHED,

@@ -260,10 +260,15 @@ async function runTest(req: Request, res: Response) {
 
   const currentProject = await BotProjectService.getProjectById(projectId, user);
   if (currentProject !== undefined) {
-    let cmd = `${Tester} --autoDetect true --botFolder ${currentProject.dir} --testFolder ${currentProject.testDir} --testSubFolder ${req.body.testPath}`;
+    let cmd = `${Tester} --autoDetect true --botFolder ${currentProject.dir} --testFolder ${currentProject.testDir}`;
     if (req.body.isTestFolder) {
+      const testPath = currentProject.testDir + '/' + req.body.testPath;
+      cmd += ` --testSubFolder ${testPath}`;
     } else {
+      const testPath = currentProject.testDir + '/' + req.body.testPath + '.dialog';
+      cmd += ` --testSubFolder ${testPath}`;
     }
+    console.log(cmd);
 
     try {
       const output = execSync(cmd, { encoding: 'utf8' });
