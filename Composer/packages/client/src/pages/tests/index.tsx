@@ -138,14 +138,15 @@ const TestsPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: str
   }
 
   async function handleCreateDialogSubmit(data: { name: string; description: string }) {
-    let name = data.name;
+    let name = data.name.replace(/\//g, '-');
     if (!name.endsWith('.mock') && !name.endsWith('.test')) {
       name += '.test';
     }
 
     const seededContent = {
-      $schema: "https://raw.githubusercontent.com/microsoft/BotFramework-Composer/stable/Composer/packages/server/schemas/sdk.schema",
-      $kind: "Microsoft.Test.Script",
+      $schema:
+        'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/stable/Composer/packages/server/schemas/sdk.schema',
+      $kind: 'Microsoft.Test.Script',
       description: data.description,
     };
 

@@ -256,9 +256,16 @@ export class BotProject {
       await this.updateDefaultSlotEnvSettings(JSON.parse(content));
       return new Date().toDateString();
     }
-    const file = this.files.find(d => d.name === name) || this.testFiles.find(d => d.name === name);
+    let file = this.files.find(d => d.name === name);
     if (file === undefined) {
-      throw new Error(`no such file ${name}`);
+      const index = name.lastIndexOf('-');
+      if (index != -1) {
+        name = name.substr(index + 1);
+      }
+      file = this.testFiles.find(d => d.name === name);
+      if (file == undefined) {
+        throw new Error(`no such file ${name}`);
+      }
     }
 
     const relativePath = file.relativePath;
@@ -290,7 +297,7 @@ export class BotProject {
       if (file) {
         throw new Error(`${name} dialog already exist`);
       }
-      const relativePath = name.replace('-', '/');
+      const relativePath = name.replace(/-/g, '/');
       return await this._createTestFile(relativePath, content);
     }
 

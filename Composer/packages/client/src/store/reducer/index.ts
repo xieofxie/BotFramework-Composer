@@ -93,7 +93,7 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
   const dialogs: DialogInfo[] = [];
   testFiles.forEach(element => {
     // TODO: trick for path
-    const remain = element.path.substr(testDir.length + 1).replace('/', '-');
+    const remain = element.path.substr(testDir.length + 1).replace(/\//g, '-');
     let folder = root;
     let index = remain.lastIndexOf('-');
     if (index != -1) {
@@ -126,7 +126,7 @@ const getTestDialogs = (testDir: string, testFiles: FileInfo[]) => {
     const dialog = {
       content: JSON.parse('{"message":"Will run all tests in this folder"}'),
       diagnostics: [],
-      displayName: folder,
+      displayName: folder == root ? folder : `[${folder}]`,
       id: folder,
       isRoot: folder == root,
       lgFile: '',
