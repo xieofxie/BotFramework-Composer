@@ -33,7 +33,8 @@
     "packages/tools/built-in-functions",
     "packages/tools/language-servers",
     "packages/tools/language-servers/*",
-    "packages/ui-plugins/*"
+    "packages/ui-plugins/*",
+    "plugins/sample-ui-plugin"
   ],
   "scripts": {
     "build": "node scripts/begin.js && yarn build:prod",
@@ -49,6 +50,8 @@
     "build:plugins": "yarn build:plugins:localpublish && yarn build:plugins:samples && yarn build:plugins:azurePublish && yarn build:plugins:runtimes",
     "build:plugins:localpublish": "cd plugins/localPublish && yarn install && yarn build",
     "build:plugins:samples": "cd plugins/samples && yarn install && yarn build",
+    "build:plugins:sampleui": "cd plugins/sample-ui-plugin && yarn install && yarn build",
+    "build:plugins:webRoute": "cd plugins/webRoute && yarn install && yarn build",
     "build:plugins:azurePublish": "cd plugins/azurePublish && yarn install && yarn build",
     "build:plugins:runtimes": "cd plugins/runtimes && yarn install && yarn build",
     "start": "cross-env NODE_ENV=production PORT=3000 yarn start:server",

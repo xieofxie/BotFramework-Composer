@@ -1,12 +1,20 @@
 {
   "name": "webroute",
   "version": "1.0.0",
+  "license": "ISC",
+  "author": "",
   "description": "",
-  "main": "index.js",
   "scripts": {
+    "build": "yarn clean && tsc --project tsconfig.json",
+    "clean": "rimraf dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "extendsComposer": false,
-  "author": "",
-  "license": "ISC"
+  "extendsComposer": true,
+  "main": "dist/index.js",
+  "dependencies": {
+    "@types/node": "^14.11.2",
+    "axios": "^0.20.0",
+    "globby": "^11.0.1",
+    "path": "^0.12.7"
+  }
 }
