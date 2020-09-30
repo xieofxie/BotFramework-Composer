@@ -6,6 +6,7 @@ import { execSync } from 'child_process';
 
 import path = require('path');
 import globby = require('globby');
+import format = require('string-format')
 
 module.exports = {
   initialize: composer => {
@@ -34,27 +35,16 @@ module.exports = {
       }
       testFolder = path.normalize(testFolder);
 
-      let runtime = projectInfo.data.settings.runtime?.path;
-      if(!!!runtime){
-        throw {message: 'Use special custom runtime for testing!'};
+      let testRuntime = projectInfo.data.settings.testRuntime;
+      if(!!!testRuntime){
+        throw {message: 'Set a testRuntime in your settings! It should contain {0} for project folder, {1} for test folder and {2} for test file/folder.'};
       }
-      runtime = path.normalize(runtime);
+      testRuntime = path.normalize(testRuntime);
 
-      return {location, testFolder, runtime};
+      const result = {location, testFolder, testRuntime};
+      console.log(result)
+      return result;
     };
-
-    // Output:
-    // location: string
-    // testFolder: string -> settings.testFolder
-    // runtime: string -> settings.runtime.path
-    composer.addWebRoute('get', '/testplugin/:projectId/info', async (req, res) => {
-      try{
-        res.send(await getInfoAsync(req.params.projectId));
-      }
-      catch(error){
-        res.send({error: error.message});
-      }
-    });
 
     // Output:
     // error: string
@@ -83,19 +73,16 @@ module.exports = {
     composer.addWebRoute('post', '/testplugin/:projectId/test', async (req, res) => {
       try{
         const info = await getInfoAsync(req.params.projectId);
-        // TODO some workaround
-        const Tester = path.join(info.runtime, 'declarative_ut/bin/Debug/netcoreapp3.1/DeclarativeUT.exe');
-
-        let cmd = `${Tester} --autoDetect true --botFolder ${info.location} --testFolder ${info.testFolder} --testSubFolder ${req.body.testFile}`;
+        const cmd = format(info.testRuntime, `"${info.location}"`, `"${info.testFolder}"`, `"${req.body.testFile}"`);
         console.log(cmd);
 
+        let result = '';
         try {
-          const output = execSync(cmd, { encoding: 'utf8' });
-          cmd = output;
+          result = execSync(cmd, { encoding: 'utf8' });
         } catch (error) {
-          cmd = error.toString();
+          result = error.toString();
         }
-        res.send({result: cmd});
+        res.send({result});
       }
       catch(error){
         res.send({error: error.message});
