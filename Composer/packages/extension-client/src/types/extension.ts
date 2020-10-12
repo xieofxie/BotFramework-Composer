@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { SDKKinds } from '@bfc/shared';
+import { SDKKinds } from '@bfc/types';
 
 import { UIOptions } from './formSchema';
 import { FlowEditorWidgetMap, FlowWidget } from './flowSchema';
@@ -17,7 +17,7 @@ export type UISchema = {
   [key in SDKKinds]?: {
     flow?: FlowWidget;
     form?: UIOptions;
-    menu?: MenuOptions;
+    menu?: MenuOptions | MenuOptions[];
     recognizer?: RecognizerOptions;
   };
 };
