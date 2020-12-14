@@ -6,7 +6,8 @@ let prodPlugins = [];
 if (process.env.NODE_ENV === 'production') {
   prodPlugins.push(
     new optimize.AggressiveMergingPlugin(),
-    new optimize.OccurrenceOrderPlugin()
+    // TODO
+    //new optimize.OccurrenceOrderPlugin()
   );
 }
 module.exports = {
