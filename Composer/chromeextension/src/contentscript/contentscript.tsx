@@ -1,13 +1,10 @@
-// @ts-nocheck
-
-import './contentscript.scss';
-
 import React from 'react';
 import ReactDOM from 'react-dom';
-import VisualDesigner from '@bfc/adaptive-flow';
-import { EditorExtension } from '@bfc/extension-client';
-
 import $ from 'jquery';
+
+import './contentscript.scss';
+import { SimpleGet } from '../utilities/utilities';
+import TriggersRenderer from './TriggersRenderer';
 
 // return new elem
 function ConfigureShowHide(originalElem, id){
@@ -16,7 +13,7 @@ function ConfigureShowHide(originalElem, id){
     var button = `<button id=${'button_'+id}>Toggle</button>`;
     originalElem.before(button);
     var buttonElem = $(`button#${'button_'+id}`);
-    var div = `<div id=${'div_'+id} style="position:relative;height:100vh;"></div>`;
+    var div = `<div id=${'div_'+id}></div>`;
     originalElem.after(div);
     var divElem = $(`div#${'div_'+id}`);
     buttonElem.on('click', (event)=>{
@@ -28,51 +25,23 @@ function ConfigureShowHide(originalElem, id){
 
 function Render(content, rootElem){
     var data = JSON.parse(content);
-    var onBlur = (e) => {};
-    var onFocus = (e) => {};
-    var schema = {};
-    var uischema = {};
-    const shellData = {
-        // ApplicationContextApi
-        api: {
-            addCoachMarkRef: (ref) => {},
-        },
-        data: {
-            focusedEvent: 'triggers[0]',
-        },
-    };
-    var elem =
-    <EditorExtension plugins={{ uiSchema: uischema, widgets: { flow: {}, recognizer: {} } }} shell={shellData}>
-        <VisualDesigner
-        data={data}
-        schema={schema}
-        onBlur={onBlur}
-        onFocus={onFocus}
-    />
-    </EditorExtension>;
+    var elem = <TriggersRenderer schema={{}} data={data}></TriggersRenderer>;
     ReactDOM.render(elem, rootElem[0]);
 }
 
-function HandleRaw(){
+function HandleRawAsync(){
     var rawLinkElem = $('a#raw-url');
     if(!rawLinkElem) return;
     var url = rawLinkElem.attr('href');
     if(!url.endsWith('.dialog')) return;
-    // TODO make a simple request (not $.get)
-    // https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url);
-    xhr.onreadystatechange = () => {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            var bodyElem = $('div.Box-body[itemprop="text"]');
-            var renderElem = ConfigureShowHide(bodyElem, 'renderraw');
-            //renderElem.text(xhr.responseText);
-            Render(xhr.responseText, renderElem);
-         }
-    };
-    xhr.send();
+    return SimpleGet(url)
+    .then((text) => {
+        var bodyElem = $('div.Box-body[itemprop="text"]');
+        var renderElem = ConfigureShowHide(bodyElem, 'renderraw');
+        Render(text, renderElem);
+    });
 }
 
-$(()=>{
-    HandleRaw();
+$(async ()=>{
+    await HandleRawAsync();
 });
