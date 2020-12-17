@@ -5,7 +5,7 @@
 import { jsx, css } from '@emotion/core';
 import React from 'react';
 import { FieldProps, useShellApi } from '@bfc/extension-client';
-import { JsonEditor } from '@bfc/code-editor';
+import { JsonEditor } from '../Dummy';
 
 import { FieldLabel } from '../FieldLabel';
 

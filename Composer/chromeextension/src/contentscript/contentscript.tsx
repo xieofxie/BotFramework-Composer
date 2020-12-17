@@ -1,10 +1,19 @@
+import $ from 'jquery';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import $ from 'jquery';
 
 import './contentscript.scss';
+import plugins, { mergePluginConfigs } from '../utilities/plugins';
 import { SimpleGet } from '../utilities/utilities';
 import TriggersRenderer from './TriggersRenderer';
+
+const schemaUrl = 'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/main/Composer/packages/server/schemas/sdk.schema';
+let schema: any = {};
+
+const uischemaUrl = 'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/main/Composer/packages/server/schemas/sdk.uischema';
+let uischema: any = {};
+
+let pluginConfig: any = {};
 
 // return new elem
 function ConfigureShowHide(originalElem, id){
@@ -25,7 +34,7 @@ function ConfigureShowHide(originalElem, id){
 
 function Render(content, rootElem){
     var data = JSON.parse(content);
-    var elem = <TriggersRenderer schema={{}} data={data}></TriggersRenderer>;
+    var elem = <TriggersRenderer schema={schema} plugins={pluginConfig} data={data}></TriggersRenderer>;
     ReactDOM.render(elem, rootElem[0]);
 }
 
@@ -35,7 +44,7 @@ function HandleRawAsync(){
     var url = rawLinkElem.attr('href');
     if(!url.endsWith('.dialog')) return;
     return SimpleGet(url)
-    .then((text) => {
+    .then((text: string) => {
         var bodyElem = $('div.Box-body[itemprop="text"]');
         var renderElem = ConfigureShowHide(bodyElem, 'renderraw');
         Render(text, renderElem);
@@ -43,5 +52,13 @@ function HandleRawAsync(){
 }
 
 $(async ()=>{
-    await HandleRawAsync();
+    await SimpleGet(uischemaUrl)
+    .then((text: string) => {
+        uischema = JSON.parse(text);
+        // Composer\packages\client\src\pages\design\DesignPage.tsx
+        pluginConfig = mergePluginConfigs({ uiSchema: uischema }, plugins);
+    })
+    .then(() => {
+        return HandleRawAsync();
+    });
 });

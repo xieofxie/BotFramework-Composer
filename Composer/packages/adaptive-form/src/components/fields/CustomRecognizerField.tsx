@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { FieldProps } from '@bfc/extension-client';
-import { JsonEditor } from '@bfc/code-editor';
+import { JsonEditor } from '../Dummy';
 
 export const CustomRecognizerField: React.FC<FieldProps> = (props) => {
   const { value, onChange } = props;

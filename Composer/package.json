@@ -44,8 +44,6 @@
     "build:libs": "wsrun -ltm -x @bfc/electron-server -x @bfc/client -x @bfc/server -p @botframework-composer/* -p @bfc/* -c build",
     "build:server": "yarn workspace @bfc/server build",
     "build:client": "yarn workspace @bfc/client build",
-    "build:ce": "yarn workspace chromeextension build",
-    "watch:ce": "yarn workspace chromeextension watch",
     "build:extensions": "node scripts/compileExtensions.js",
     "start": "cross-env NODE_ENV=production PORT=3000 yarn start:server",
     "startall": "yarn start",

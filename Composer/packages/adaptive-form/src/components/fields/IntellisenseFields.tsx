@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { FieldProps } from '@bfc/extension-client';
-import { Intellisense } from '@bfc/intellisense';
+import { Intellisense } from '../Dummy';
 import React, { useRef, useState } from 'react';
 
 import { getIntellisenseUrl } from '../../utils/getIntellisenseUrl';

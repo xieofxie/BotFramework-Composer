@@ -4,15 +4,15 @@ import { EditorExtension } from '@bfc/extension-client';
 
 export interface TriggersRendererProps {
     schema?: any;
+    plugins?: any;
     data?: any;
 }
 
-const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, data}) => {
+const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, data}) => {
     const [focusedEvent, setFocusedEvent] = useState('triggers[0]');
 
     const onBlur = (e) => {};
     const onFocus = (e) => {};
-    const uischema = {};
     const shellData = {
         // ApplicationContextApi
         api: {
@@ -36,13 +36,14 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, data}) => {
                     } else if (name == 'Microsoft.OnDialogEvent') {
                         name = `${name}[${trigger.event}]`;
                     }
-                    return (<label><input type='radio' value={`triggers[${index}]`} name='trigger' />{name}</label>);
+                    const value = `triggers[${index}]`;
+                    return (<label key={value}><input type='radio' value={value} name='trigger'/>{name}</label>);
                 })}
             </div>
             <div style={{ position: 'relative', height: '90vh'}}>
             {/*
 // @ts-ignore */}
-                <EditorExtension plugins={{ uiSchema: uischema, widgets: { flow: {}, recognizer: {} } }} shell={shellData}>
+                <EditorExtension plugins={plugins} shell={shellData}>
                     <VisualDesigner
                         data={data}
                         schema={schema}

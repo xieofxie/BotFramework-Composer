@@ -8,7 +8,8 @@
     "build": "yarn run build:contentscript-background",
     "watch:contentscript-background": "cross-env NODE_ENV=development webpack --config webpack.config.js -w",
     "watch": "concurrently  \"npm:watch:contentscript-background\"",
-    "clean": "rimraf dist && cpy manifest.json dist && cpy src/assets/* dist/assets",
+    "clean": "rimraf dist && cpy manifest.json dist && cpy src/assets/**/* dist/assets --parents",
+    "cpmonaco": "cpy ../node_modules/monaco-editor/min/vs/**/* dist/vs --parents",
     "prebuild": "yarn run clean",
     "prewatch": "yarn run clean"
   },
@@ -34,6 +35,8 @@
   "dependencies": {
     "@bfc/adaptive-flow": "*",
     "@bfc/extension-client": "*",
+    "@bfc/ui-plugin-composer": "*",
+    "lodash": "^4.17.19",
     "jquery": "^3.5.1",
     "react-dom": "16.13.1"
   }

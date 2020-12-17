@@ -1,11 +1,12 @@
 const { CheckerPlugin } = require('awesome-typescript-loader');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { optimize, DefinePlugin } = require('webpack');
-const { join } = require('path');
+const path = require('path');
+
 let prodPlugins = [];
 if (process.env.NODE_ENV === 'production') {
   prodPlugins.push(
-    //new optimize.AggressiveMergingPlugin(),
+    new optimize.AggressiveMergingPlugin(),
     // TODO
     //new optimize.OccurrenceOrderPlugin()
   );
@@ -16,11 +17,11 @@ module.exports = {
   mode: process.env.NODE_ENV,
   devtool: 'inline-source-map',
   entry: {
-    contentscript: join(__dirname, 'src/contentscript/contentscript.tsx'),
-    background: join(__dirname, 'src/background/background.ts'),
+    contentscript: path.join(__dirname, 'src/contentscript/contentscript.tsx'),
+    background: path.join(__dirname, 'src/background/background.ts'),
   },
   output: {
-    path: join(__dirname, 'dist'),
+    path: path.join(__dirname, 'dist'),
     filename: '[name].js',
   },
   module: {
@@ -52,7 +53,8 @@ module.exports = {
     // https://stackoverflow.com/questions/37656592/define-global-variable-with-webpack
     // https://webpack.js.org/plugins/define-plugin/#usage
     new DefinePlugin({
-      'process.platform': 'win32'
+      'process.platform': JSON.stringify('win32'),
+      'process.env.TERM': JSON.stringify(''),
     })
   ],
   resolve: {
@@ -60,7 +62,7 @@ module.exports = {
     // https://webpack.js.org/configuration/resolve/#resolvefallback
     fallback: {
       crypto: false,
-      fs: false
+      fs: false,
     }
   },
 };
