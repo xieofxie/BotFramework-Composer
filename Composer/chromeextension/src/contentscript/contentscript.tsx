@@ -40,7 +40,7 @@ function Render(content, rootElem){
 
 function HandleRawAsync(){
     var rawLinkElem = $('a#raw-url');
-    if(!rawLinkElem) return;
+    if(rawLinkElem.length == 0) return;
     var url = rawLinkElem.attr('href');
     if(!url.endsWith('.dialog')) return;
     return SimpleGet(url)

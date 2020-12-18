@@ -32,6 +32,19 @@ export interface ActionHeaderProps extends WidgetContainerProps {
   };
 }
 
+const getGitColor = (data: any, color: string | undefined): string | undefined => {
+  if (data?.gitStatus) {
+    if (data.gitStatus === 'deletion') {
+      return '#ffeef0';
+    } else if (data.gitStatus === 'addition') {
+      return '#e6ffed';
+    } else if (data.gitStatus === 'both') {
+      return '#ffff00';
+    }
+  }
+  return color;
+};
+
 export const ActionHeader: WidgetComponent<ActionHeaderProps> = ({
   id,
   data,
@@ -44,7 +57,7 @@ export const ActionHeader: WidgetComponent<ActionHeaderProps> = ({
   colors = DefaultColors,
 }) => {
   const disabled = data.disabled === true;
-  const containerCSS = disabled ? DisabledHeaderContainerCSS : HeaderContainerCSS(colors.theme);
+  const containerCSS = disabled ? DisabledHeaderContainerCSS : HeaderContainerCSS(getGitColor(data, colors.theme));
   const bodyCSS = HeaderBodyCSS;
   const textCSS = disabled ? DisabledHeaderTextCSS : HeaderTextCSS(colors.color);
   const iconColor = disabled ? DisabledIconColor : colors.icon;
