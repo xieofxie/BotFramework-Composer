@@ -36,8 +36,10 @@
     "@bfc/adaptive-flow": "*",
     "@bfc/extension-client": "*",
     "@bfc/ui-plugin-composer": "*",
-    "lodash": "^4.17.19",
     "jquery": "^3.5.1",
+    "json-source-map": "^0.6.1",
+    "jsonpointer": "^4.1.0",
+    "lodash": "^4.17.19",
     "react-dom": "16.13.1"
   }
 }
