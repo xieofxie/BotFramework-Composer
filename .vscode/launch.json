@@ -9,6 +9,17 @@
       "webRoot": "${workspaceFolder}"
     },
     {
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach to Chrome Extension",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack://chromeextension/./src/*": "${webRoot}/Composer/chromeextension/src/*"
+      }
+    },
+    {
       "name": "LU LSP Server",
       "type": "node",
       "request": "launch",
