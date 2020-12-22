@@ -15,7 +15,7 @@ interface LineObj {
 };
 
 // TODO optimize
-export default function ParseJsonWithStatus(data: string, lines: LineStatus[]) : any {
+export default function parseJsonWithStatus(data: string, lines: LineStatus[]) : any {
     const result = jsonMap.parse(data);
     const lineObjs: LineObj[] = [];
     for (let [key, value] of Object.entries(result.pointers)) {

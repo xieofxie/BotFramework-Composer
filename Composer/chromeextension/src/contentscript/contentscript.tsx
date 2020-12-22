@@ -2,14 +2,14 @@ import $ from 'jquery';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 
 import './contentscript.scss';
-import { HandleDiffAsync } from './HandleDiff';
-import { HandleRawAsync } from './HandleRaw';
+import { handleDiffAsync } from './handleDiff';
+import { handleRawAsync } from './handleRaw';
 
 initializeIcons(undefined, { disableWarnings: true });
 
 $(async ()=>{
-    return await HandleRawAsync()
+    return await handleRawAsync()
     .then(async () => {
-        return await HandleDiffAsync();
+        return await handleDiffAsync();
     });
 });

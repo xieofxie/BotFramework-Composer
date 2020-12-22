@@ -1,5 +1,5 @@
 import plugins, { mergePluginConfigs } from './plugins';
-import { SimpleGet } from './utilities';
+import { simpleGet } from './utilities';
 
 const schemaUrl = 'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/main/Composer/packages/server/schemas/sdk.schema';
 let schema: any = null;
@@ -9,9 +9,9 @@ let uischema: any = null;
 
 let pluginConfig: any = null;
 
-export async function GetSchemaAsync() : Promise<any> {
+export async function getSchemaAsync() : Promise<any> {
     if (!schema) {
-        return await SimpleGet(schemaUrl)
+        return await simpleGet(schemaUrl)
         .then((text: string) => {
             schema = JSON.parse(text);
             return schema;
@@ -20,9 +20,9 @@ export async function GetSchemaAsync() : Promise<any> {
     return schema;
 };
 
-export async function GetUiSchemaAsync() : Promise<any> {
+export async function getUiSchemaAsync() : Promise<any> {
     if (!uischema) {
-        return await SimpleGet(uischemaUrl)
+        return await simpleGet(uischemaUrl)
         .then((text: string) => {
             uischema = JSON.parse(text);
             return uischema;
@@ -31,9 +31,9 @@ export async function GetUiSchemaAsync() : Promise<any> {
     return uischema;
 };
 
-export async function GetPluginConfigAsync() : Promise<any> {
+export async function getPluginConfigAsync() : Promise<any> {
     if (!pluginConfig) {
-        return await GetUiSchemaAsync()
+        return await getUiSchemaAsync()
         .then((uischema: any) => {
             // Composer\packages\client\src\pages\design\DesignPage.tsx
             pluginConfig = mergePluginConfigs({ uiSchema: uischema }, plugins);

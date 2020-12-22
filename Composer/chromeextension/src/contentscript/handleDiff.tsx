@@ -1,10 +1,10 @@
 import $ from 'jquery';
 
-import { ConfigureShowHide, RenderAsync } from './renderers';
-import { SimpleGet } from '../utilities/utilities';
-import ParseJsonWithStatus, { LineStatus } from '../utilities/ParseJsonWithStatus';
+import { configureShowHide, renderAsync } from './renderers';
+import { simpleGet } from '../utilities/utilities';
+import parseJsonWithStatus, { LineStatus } from '../utilities/parseJsonWithStatus';
 
-const GetStatus = (element: JQuery<HTMLElement>) => {
+const getStatus = (element: JQuery<HTMLElement>) => {
     if(element[0].classList.contains('blob-code-addition')){
         return 'addition';
     }else if(element[0].classList.contains('blob-code-deletion')){
@@ -14,7 +14,7 @@ const GetStatus = (element: JQuery<HTMLElement>) => {
     }
 };
 
-export async function HandleDiffAsync(){
+export async function handleDiffAsync(){
     const linkElems = $('a.btn-link[role="menuitem"][rel="nofollow"]');
     if (linkElems.length == 0) return;
     let urls: string[] = [];
@@ -39,9 +39,9 @@ export async function HandleDiffAsync(){
                 const linenumbers = temp.eq(2).attr('data-line-number');
                 if (!!!linenumbers) return;
                 const linenumber = parseInt(linenumbers);
-                const thisStatus = GetStatus(temp.eq(3));
+                const thisStatus = getStatus(temp.eq(3));
                 if (!!!thisStatus) return;
-                const prevStatus = GetStatus(temp.eq(1));
+                const prevStatus = getStatus(temp.eq(1));
                 status.push({
                     status: prevStatus ? 'both' : thisStatus,
                     line: linenumber
@@ -50,11 +50,11 @@ export async function HandleDiffAsync(){
         });
         // console.error(status);
 
-        return await SimpleGet(url)
+        return await simpleGet(url)
         .then(async (text: string) => {
-            const data = ParseJsonWithStatus(text, status);
-            const renderElem = ConfigureShowHide(bodyElems[index], `renderdiff_${index}`);
-            await RenderAsync(data, renderElem, true);
+            const data = parseJsonWithStatus(text, status);
+            const renderElem = configureShowHide(bodyElems[index], `renderdiff_${index}`);
+            await renderAsync(data, renderElem, true);
         });
     });
 }

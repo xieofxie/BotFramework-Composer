@@ -11,11 +11,11 @@ export interface TriggersRendererProps {
     enableHide: boolean;
 }
 
-const GetGitStatus = (data: any) => {
+const getGitStatus = (data: any) => {
     let status = null;
     if (Array.isArray(data)) {
         data.forEach((value) => {
-            status = mergeStatus(status, GetGitStatus(value));
+            status = mergeStatus(status, getGitStatus(value));
         });
     }
     else if (typeof(data) === 'object') {
@@ -23,16 +23,16 @@ const GetGitStatus = (data: any) => {
             status = mergeStatus(status, data.gitStatus);
         }
         Object.values(data).forEach((value) => {
-            status = mergeStatus(status, GetGitStatus(value));
+            status = mergeStatus(status, getGitStatus(value));
         });
     }
     return status;
 };
 
-const SetTriggerGitStatus = (data: any) => {
+const setTriggerGitStatus = (data: any) => {
     data.triggers.forEach((trigger) => {
         // TODO a combination of all or data
-        let status = GetGitStatus(trigger);
+        let status = getGitStatus(trigger);
         if (!!!status) {
             status = data.status;
         }
@@ -63,7 +63,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
 
     let selected = 0;
     if (enableHide) {
-        SetTriggerGitStatus(data);
+        setTriggerGitStatus(data);
         data?.triggers?.map((trigger, index) => {
             if(!!trigger.gitStatus){
                 selected = index;
