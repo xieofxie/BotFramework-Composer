@@ -1,6 +1,8 @@
 import jsonMap from 'json-source-map';
 import jsonpointer from 'jsonpointer';
 
+import { mergeStatus } from './status';
+
 export interface LineStatus {
     status: 'addition' | 'deletion' | 'both';
     line: number;
@@ -36,14 +38,10 @@ export default function ParseJsonWithStatus(data: string, lines: LineStatus[]) :
             }
         });
         if(best){
-            if('gitStatus' in best.obj){
-                if(best.obj.gitStatus != line.status){
-                    best.obj.gitStatus = 'both';
-                }
-            }else{
-                console.error(best.obj);
-                best.obj.gitStatus = line.status;
+            if(!('gitStatus' in best.obj)){
+                // console.error(best.obj);
             }
+            best.obj.gitStatus = mergeStatus(best.obj.gitStatus, line.status);
         }
     });
     return result.data;

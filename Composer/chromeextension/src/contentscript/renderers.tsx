@@ -23,7 +23,7 @@ export function ConfigureShowHide(originalElem, id: string){
     return divElem;
 }
 
-export async function RenderAsync(data: any, rootElem){
-    var elem = <TriggersRenderer schema={await GetSchemaAsync()} plugins={await GetPluginConfigAsync()} data={data}></TriggersRenderer>;
+export async function RenderAsync(data: any, rootElem, enableHide: boolean){
+    var elem = <TriggersRenderer schema={await GetSchemaAsync()} plugins={await GetPluginConfigAsync()} data={data} enableHide={enableHide}></TriggersRenderer>;
     ReactDOM.render(elem, rootElem[0]);
 }

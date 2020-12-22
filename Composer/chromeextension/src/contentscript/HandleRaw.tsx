@@ -14,6 +14,6 @@ export async function HandleRawAsync(){
         const data = JSON.parse(text);
         const bodyElem = $('div.Box-body[itemprop="text"]').first();
         const renderElem = ConfigureShowHide(bodyElem, 'renderraw');
-        await RenderAsync(data, renderElem);
+        await RenderAsync(data, renderElem, false);
     });
 }
