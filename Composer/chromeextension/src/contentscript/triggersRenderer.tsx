@@ -43,7 +43,18 @@ const setTriggerGitStatus = (data: any) => {
 };
 
 const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, data, enableHide}) => {
-    const [focusedEvent, setFocusedEvent] = useState('triggers[0]');
+    let selected = 0;
+    if (enableHide) {
+        setTriggerGitStatus(data);
+        data?.triggers?.map((trigger, index) => {
+            if(!!trigger.gitStatus){
+                selected = index;
+                return false;
+            }
+        });
+    }
+
+    const [focusedEvent, setFocusedEvent] = useState(`triggers[${selected}]`);
     const [hide, setHide] = useState(true);
 
     const onBlur = (e) => {};
@@ -60,17 +71,6 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
     const radioOnChange = (event) => {
         setFocusedEvent(event.target.value);
     };
-
-    let selected = 0;
-    if (enableHide) {
-        setTriggerGitStatus(data);
-        data?.triggers?.map((trigger, index) => {
-            if(!!trigger.gitStatus){
-                selected = index;
-                return false;
-            }
-        });
-    }
 
     return (
         <div>
