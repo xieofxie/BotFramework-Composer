@@ -1,14 +1,14 @@
 import $ from 'jquery';
 
-import { ConfigureShowHide, RenderAsync } from './renderers';
+import { configureShowHide, renderAsync } from './renderers';
 
-export async function HandleCodeBlockAsync(){
+export async function handleCodeBlockAsync(){
     let renderList = [];
     $("[lang='declarative']").each(function(index, codeblock) {
         const text = $(codeblock).find(":first-child").text();
         const data = JSON.parse(text);
-        const renderElem = ConfigureShowHide($(codeblock), 'rendercodeblock'+index);
-        renderList.push(RenderAsync(data, renderElem));
+        const renderElem = configureShowHide($(codeblock), 'rendercodeblock'+index);
+        renderList.push(renderAsync(data, renderElem, true));
     });
     Promise.all(renderList);
 }
