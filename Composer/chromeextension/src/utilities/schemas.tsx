@@ -1,5 +1,7 @@
-import plugins, { mergePluginConfigs } from './plugins';
+import plugins, { mergePluginConfigs } from '../clientdummies/plugins';
 import { simpleGet } from './utilities';
+
+// TODO not parallelizable
 
 const schemaUrl = 'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/main/Composer/packages/server/schemas/sdk.schema';
 let schema: any = null;

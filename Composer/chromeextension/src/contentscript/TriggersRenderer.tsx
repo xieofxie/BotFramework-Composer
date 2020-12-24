@@ -1,9 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import VisualDesigner from '@bfc/adaptive-flow';
 import AdaptiveForm, { resolveRef, getUIOptions } from '@bfc/adaptive-form';
 import { EditorExtension, useFormConfig } from '@bfc/extension-client';
 
+import { designPageLocationState } from '../clientdummies/botState';
+import { useShell } from '../clientdummies/useShell';
 import { mergeStatus, getGitColor } from '../utilities/status';
+import { useSetRecoilState } from 'recoil';
 
 export interface TriggersRendererProps {
     schema?: any;
@@ -55,22 +58,19 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
         });
     }
 
-    const [focusedEvent, setFocusedEvent] = useState(`triggers[${selected}]`);
+    const setFocusedEvent = useSetRecoilState(designPageLocationState('dummy'));
+    useEffect(() => {
+        setFocusedEvent({ selected: `triggers[${selected}]` });
+    }, []);
+
     const [hide, setHide] = useState(true);
 
     const onBlur = (e) => {};
     const onFocus = (e) => {};
-    const shellData = {
-        // ApplicationContextApi
-        api: {
-            addCoachMarkRef: (ref) => {},
-        },
-        data: {
-            focusedEvent: focusedEvent,
-        },
-    };
+    const shellData = useShell();
     const radioOnChange = (event) => {
-        setFocusedEvent(event.target.value);
+        const value: string = event.target.value;
+        setFocusedEvent({ selected: value });
     };
 
     // Composer\packages\client\src\pages\design\PropertyEditor.tsx

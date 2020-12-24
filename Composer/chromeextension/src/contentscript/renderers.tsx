@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { RecoilRoot } from 'recoil';
 
 import TriggersRenderer from './TriggersRenderer';
 import { getSchemaAsync, getPluginConfigAsync } from '../utilities/schemas';
@@ -24,6 +25,9 @@ export function configureShowHide(originalElem, id: string){
 }
 
 export async function renderAsync(data: any, rootElem, enableHide: boolean){
-    var elem = <TriggersRenderer schema={await getSchemaAsync()} plugins={await getPluginConfigAsync()} data={data} enableHide={enableHide}></TriggersRenderer>;
+    var elem =
+        <RecoilRoot>
+            <TriggersRenderer schema={await getSchemaAsync()} plugins={await getPluginConfigAsync()} data={data} enableHide={enableHide}></TriggersRenderer>
+        </RecoilRoot>;
     ReactDOM.render(elem, rootElem[0]);
 }

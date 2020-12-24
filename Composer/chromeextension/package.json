@@ -41,6 +41,7 @@
     "json-source-map": "^0.6.1",
     "jsonpointer": "^4.1.0",
     "lodash": "^4.17.19",
-    "react-dom": "16.13.1"
+    "react-dom": "16.13.1",
+    "recoil": "^0.0.13"
   }
 }

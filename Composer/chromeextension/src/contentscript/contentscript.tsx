@@ -6,7 +6,6 @@ import { handleDiffAsync } from './handleDiff';
 import { handleRawAsync } from './handleRaw';
 import { handleCodeBlockAsync } from './handleCodeBlock';
 
-
 initializeIcons(undefined, { disableWarnings: true });
 
 $(async ()=>{
