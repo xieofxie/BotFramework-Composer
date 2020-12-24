@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import VisualDesigner from '@bfc/adaptive-flow';
-import { EditorExtension } from '@bfc/extension-client';
+import AdaptiveForm, { resolveRef, getUIOptions } from '@bfc/adaptive-form';
+import { EditorExtension, useFormConfig } from '@bfc/extension-client';
 
 import { mergeStatus, getGitColor } from '../utilities/status';
 
@@ -72,6 +73,16 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
         setFocusedEvent(event.target.value);
     };
 
+    // Composer\packages\client\src\pages\design\PropertyEditor.tsx
+    const formUIOptions = useFormConfig();
+    const $uiOptions = useMemo(() => {
+        return getUIOptions(schema, formUIOptions);
+    }, [formUIOptions]);
+    const handleDataChange = (newData?: any) => {
+    };
+    const handleFocusTab = (focusedTab) => {
+    };
+
     return (
         <div>
             <div>
@@ -92,17 +103,32 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
                     })}
                 </span>
             </div>
-            <div style={{ position: 'relative', height: '90vh'}}>
+            <div>
+                <div style={{ float: 'left', width: '100%', height: '90vh', position: 'relative' }}>
             {/*
 // @ts-ignore */}
-                <EditorExtension plugins={plugins} shell={shellData}>
-                    <VisualDesigner
-                        data={data}
+                    <EditorExtension plugins={plugins} shell={shellData}>
+                        <VisualDesigner
+                            data={data}
+                            schema={schema}
+                            onBlur={onBlur}
+                            onFocus={onFocus}
+                        />
+                    </EditorExtension>
+                </div>
+                {/*
+                <div style={{ float: 'right', width: '20%', height: '90vh', overflow: 'scroll' }}>
+                    <AdaptiveForm
+                        errors={{}}
+                        focusedTab={''}
+                        formData={data}
                         schema={schema}
-                        onBlur={onBlur}
-                        onFocus={onFocus}
+                        uiOptions={$uiOptions}
+                        onChange={handleDataChange}
+                        onFocusedTab={handleFocusTab}
                     />
-                </EditorExtension>
+                </div>
+                */}
             </div>
         </div>
     );

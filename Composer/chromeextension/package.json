@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@bfc/adaptive-flow": "*",
+    "@bfc/adaptive-form": "*",
     "@bfc/extension-client": "*",
     "@bfc/ui-plugin-composer": "*",
     "jquery": "^3.5.1",
