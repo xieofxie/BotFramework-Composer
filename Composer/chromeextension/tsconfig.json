@@ -7,7 +7,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "target": "es5",
-    "sourceMap": false,
+    "sourceMap": true,
     "noImplicitAny": false,
     "types": ["@types/chrome", "node"],
     "typeRoots": ["node_modules/@types"],
