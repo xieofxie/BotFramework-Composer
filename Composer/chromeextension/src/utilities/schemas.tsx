@@ -1,3 +1,5 @@
+import { dialogGroups, DialogGroup } from '@bfc/shared';
+
 import plugins, { mergePluginConfigs } from '../clientdummies/plugins';
 import { simpleGet } from './utilities';
 
@@ -44,3 +46,16 @@ export async function getPluginConfigAsync() : Promise<any> {
     }
     return pluginConfig;
 };
+
+let triggers: Set<string> = null;
+
+export function isTrigger(kind: string) : boolean {
+    if (!triggers) {
+        triggers = new Set<string>();
+        const groups = [DialogGroup.EVENTS, DialogGroup.DIALOG_EVENT_TYPES, DialogGroup.ADVANCED_EVENTS, DialogGroup.RECOGNIZER];
+        groups.forEach((group) => {
+            dialogGroups[group].types.forEach((type) => triggers.add(type));
+        });
+    }
+    return triggers.has(kind);
+}

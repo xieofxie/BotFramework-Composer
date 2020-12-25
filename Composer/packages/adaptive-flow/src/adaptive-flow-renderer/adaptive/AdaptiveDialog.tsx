@@ -51,7 +51,7 @@ export const AdaptiveDialog: FC<AdaptiveDialogProps> = ({
   widgets = builtinWidgets,
   renderers = {},
 }): JSX.Element => {
-  const activeTriggerData = get(dialogData, activeTrigger, null);
+  const activeTriggerData = activeTrigger === '.' ? dialogData : get(dialogData, activeTrigger, null);
   if (!activeTriggerData) {
     return <Fragment />;
   }

@@ -5,6 +5,7 @@ import { EditorExtension, useFormConfig } from '@bfc/extension-client';
 
 import { designPageLocationState } from '../clientdummies/botState';
 import { useShell } from '../clientdummies/useShell';
+import { isTrigger } from '../utilities/schemas';
 import { mergeStatus, getGitColor } from '../utilities/status';
 import { useSetRecoilState } from 'recoil';
 
@@ -58,9 +59,24 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
         });
     }
 
+    // TODO simple workaround based on Composer\packages\adaptive-flow\src\adaptive-flow-renderer\widgets\TriggerSummary\TriggerSummary.tsx
+    if (!!!data.triggers && !isTrigger(data.$kind)) {
+        const trigger = { $kind: '', intent: '', actions: null };
+        if (Array.isArray(data)) {
+            trigger.actions = data;
+        } else {
+            trigger.actions = [data];
+        }
+        data = trigger;
+    }
+
     const setFocusedEvent = useSetRecoilState(designPageLocationState('dummy'));
     useEffect(() => {
-        setFocusedEvent({ selected: `triggers[${selected}]` });
+        if (data.triggers) {
+            setFocusedEvent({ selected: `triggers[${selected}]` });
+        } else {
+            setFocusedEvent({ selected: '.' });
+        }
     }, []);
 
     const [hide, setHide] = useState(true);
