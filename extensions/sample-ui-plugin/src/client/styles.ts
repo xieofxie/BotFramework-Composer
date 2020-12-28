@@ -87,3 +87,19 @@ export const backButton = css`
 export const saveButton = css`
   margin-left: 8px;
 `;
+
+export const layoutflow = css`
+  flex-grow: 1;
+  position: relative;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 10;
+`;
+
+export const controls = css`
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 10;
+`;
