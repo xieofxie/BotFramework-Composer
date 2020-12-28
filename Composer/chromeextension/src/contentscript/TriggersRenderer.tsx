@@ -49,48 +49,113 @@ const setTriggerGitStatus = (data: any) => {
 
 const formatSelected = (selected: number) => `triggers[${selected}]`;
 
-const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, data, enableHide}) => {
-    let selected = 0;
-    if (enableHide) {
-        setTriggerGitStatus(data);
-        data?.triggers?.map((trigger, index) => {
-            if(!!trigger.gitStatus){
-                selected = index;
-                return false;
-            }
-        });
-    }
-
-    // TODO simple workaround based on Composer\packages\adaptive-flow\src\adaptive-flow-renderer\widgets\TriggerSummary\TriggerSummary.tsx
-    if (!!!data.triggers && !isTrigger(data.$kind)) {
-        const trigger = { $kind: '', intent: '', actions: null };
-        if (Array.isArray(data)) {
-            trigger.actions = data;
-        } else {
-            trigger.actions = [data];
+const renderOptions = (triggers: any[], hide: boolean) => {
+    return triggers?.map((trigger, index) => {
+        if (hide && !!!trigger.gitStatus) {
+            return null;
         }
-        data = trigger;
-    }
+        let name = trigger.$kind;
+        if (name == 'Microsoft.OnIntent') {
+            name = `${name}[${trigger.intent}]`;
+        } else if (name == 'Microsoft.OnDialogEvent') {
+            name = `${name}[${trigger.event}]`;
+        }
+        const value = formatSelected(index);
+        return (<option value={value} key={value} style={{background: getGitColor(trigger.gitStatus)}}>{name}</option>);
+    });
+};
+
+const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, data, enableHide}) => {
+    const [hide, setHide] = useState(enableHide ? true : false);
+    const [selectValue, setSelectValue] = useState('');
 
     const shellData = useShell();
     const setFocusedEvent = useSetRecoilState(designPageLocationState(shellData.data.projectId));
+
+    const renderData = useMemo(() => {
+        if (enableHide) {
+            setTriggerGitStatus(data);
+        }
+        // TODO simple workaround based on Composer\packages\adaptive-flow\src\adaptive-flow-renderer\widgets\TriggerSummary\TriggerSummary.tsx
+        if (!!!data.triggers && !isTrigger(data.$kind)) {
+            const trigger = { $kind: '', intent: '', actions: null };
+            if (Array.isArray(data)) {
+                trigger.actions = data;
+            } else {
+                trigger.actions = [data];
+            }
+            return trigger;
+        }
+        return data;
+    }, [data, enableHide]);
+
+    // set default selected
     useEffect(() => {
-        if (data.triggers) {
+        let selected = 0;
+        if (enableHide) {
+            renderData?.triggers?.every((trigger, index) => {
+                if(!!trigger.gitStatus){
+                    selected = index;
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        setSelectValue(formatSelected(selected));
+
+        if (renderData.triggers) {
             setFocusedEvent({ selected: formatSelected(selected) });
         } else {
             setFocusedEvent({ selected: '.' });
         }
     }, []);
 
-    const [hide, setHide] = useState(true);
+    const allOptions = useMemo(() => {
+        return renderOptions(renderData?.triggers, false);
+    }, [renderData]);
 
-    const onBlur = (e) => {};
-    const onFocus = (e) => {};
+    const hideOptions = useMemo(() => {
+        if (enableHide) {
+            return renderOptions(renderData?.triggers, true);
+        }
+        return null;
+    }, [renderData, enableHide]);
 
-    const radioOnChange = (event) => {
+    const hideTriggers = useMemo(() => {
+        let result = [];
+        if (enableHide) {
+            renderData?.triggers?.forEach((trigger, index) => {
+                if (!!trigger.gitStatus) {
+                    result.push(formatSelected(index));
+                }
+            });
+        }
+        return result;
+    }, [renderData, enableHide]);
+
+    const hideButtonOnClick = () => {
+        setHide((hide) => {
+            if (!hide) {
+                if (!hideTriggers.includes(selectValue)) {
+                    const value: string = hideTriggers[0];
+                    setFocusedEvent({ selected: value });
+                    setSelectValue(value);
+                }
+            }
+            return !hide;
+        });
+    };
+
+    const selectOnChange = (event) => {
         const value: string = event.target.value;
         setFocusedEvent({ selected: value });
+        setSelectValue(value);
     };
+
+    // Composer\packages\client\src\pages\design\DesignPage.tsx
+    const onBlur = (e) => {};
+    const onFocus = (e) => {};
 
     // Composer\packages\client\src\pages\design\PropertyEditor.tsx
     const formUIOptions = useFormConfig();
@@ -105,21 +170,9 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
     return (
         <div>
             <div>
-                {enableHide?<button onClick={()=>{setHide(!hide)}}>Toggle Modified</button>:null}
-                <select onChange={radioOnChange} defaultValue={formatSelected(selected)}>
-                    {data?.triggers?.map((trigger, index) => {
-                        let name = trigger.$kind;
-                        if (name == 'Microsoft.OnIntent') {
-                            name = `${name}[${trigger.intent}]`;
-                        } else if (name == 'Microsoft.OnDialogEvent') {
-                            name = `${name}[${trigger.event}]`;
-                        }
-                        const value = formatSelected(index);
-                        if (enableHide && hide && !!!trigger.gitStatus) {
-                            return null;
-                        }
-                        return (<option value={value} key={value} style={{background: getGitColor(trigger.gitStatus)}}>{name}</option>);
-                    })}
+                {enableHide?<button onClick={()=>{hideButtonOnClick()}}>Toggle Modified</button>:null}
+                <select onChange={selectOnChange} value={selectValue}>
+                    {hide ? hideOptions : allOptions}
                 </select>
             </div>
             <div>
@@ -128,7 +181,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
 // @ts-ignore */}
                     <EditorExtension plugins={plugins} shell={shellData}>
                         <VisualDesigner
-                            data={data}
+                            data={renderData}
                             schema={schema}
                             onBlur={onBlur}
                             onFocus={onFocus}
