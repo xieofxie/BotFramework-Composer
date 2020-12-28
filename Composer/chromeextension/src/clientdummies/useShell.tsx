@@ -9,7 +9,8 @@ import { zoomDispatcher } from './zoom';
 import { rateInfoState } from './zoomState';
 
 export function useShell(): any {
-    const designPageLocation = useRecoilValue(designPageLocationState('dummy'));
+    const projectId = 'dummyProjectId';
+    const designPageLocation = useRecoilValue(designPageLocationState(projectId));
     const flowZoomRate = useRecoilValue(rateInfoState);
 
     const { setVisualEditorSelection } = editorDispatcher();
@@ -46,6 +47,7 @@ export function useShell(): any {
     };
 
     const data = {
+        projectId,
         focusedEvent: selected,
         flowZoomRate,
     };

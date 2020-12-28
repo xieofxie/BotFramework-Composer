@@ -27,7 +27,8 @@ export async function handleDiffAsync(){
         const rawurl = url.replace(/\/blob\//, '/raw/');
         urls.push(rawurl);
         // TODO heavily rely on how github renders its page
-        const bodyElem = $(value).parents().eq(4).next();
+        // const bodyElem = $(value).parents().eq(4).next().children().eq(0).children().eq(0);
+        const bodyElem = $(value).parents().eq(5).find('table').eq(0);
         bodyElems.push(bodyElem);
     });
 

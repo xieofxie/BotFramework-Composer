@@ -35,7 +35,7 @@ const getGitStatus = (data: any) => {
 };
 
 const setTriggerGitStatus = (data: any) => {
-    data.triggers.forEach((trigger) => {
+    data?.triggers?.forEach((trigger) => {
         // TODO a combination of all or data
         let status = getGitStatus(trigger);
         if (!!!status) {
@@ -46,6 +46,8 @@ const setTriggerGitStatus = (data: any) => {
         }
     });
 };
+
+const formatSelected = (selected: number) => `triggers[${selected}]`;
 
 const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, data, enableHide}) => {
     let selected = 0;
@@ -70,10 +72,11 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
         data = trigger;
     }
 
-    const setFocusedEvent = useSetRecoilState(designPageLocationState('dummy'));
+    const shellData = useShell();
+    const setFocusedEvent = useSetRecoilState(designPageLocationState(shellData.data.projectId));
     useEffect(() => {
         if (data.triggers) {
-            setFocusedEvent({ selected: `triggers[${selected}]` });
+            setFocusedEvent({ selected: formatSelected(selected) });
         } else {
             setFocusedEvent({ selected: '.' });
         }
@@ -83,7 +86,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
 
     const onBlur = (e) => {};
     const onFocus = (e) => {};
-    const shellData = useShell();
+
     const radioOnChange = (event) => {
         const value: string = event.target.value;
         setFocusedEvent({ selected: value });
@@ -103,7 +106,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
         <div>
             <div>
                 {enableHide?<button onClick={()=>{setHide(!hide)}}>Toggle Modified</button>:null}
-                <span onChange={radioOnChange}>
+                <select onChange={radioOnChange} defaultValue={formatSelected(selected)}>
                     {data?.triggers?.map((trigger, index) => {
                         let name = trigger.$kind;
                         if (name == 'Microsoft.OnIntent') {
@@ -111,13 +114,13 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
                         } else if (name == 'Microsoft.OnDialogEvent') {
                             name = `${name}[${trigger.event}]`;
                         }
-                        const value = `triggers[${index}]`;
+                        const value = formatSelected(index);
                         if (enableHide && hide && !!!trigger.gitStatus) {
                             return null;
                         }
-                        return (<label key={value} style={{background: getGitColor(trigger.gitStatus)}}><input type='radio' value={value} name='trigger' defaultChecked={index==selected}/>{name}</label>);
+                        return (<option value={value} key={value} style={{background: getGitColor(trigger.gitStatus)}}>{name}</option>);
                     })}
-                </span>
+                </select>
             </div>
             <div>
                 <div style={{ float: 'left', width: '100%', height: '90vh', position: 'relative' }}>
