@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, Fragment } from 'react';
 import { render, useProjectApi } from '@bfc/extension-client';
 import {
   DetailsList,
@@ -69,7 +69,8 @@ interface LinkDetail {
 const getLinkedDialogs = (parent: string, data: any, ids: Map<string, LinkDetail[]>) => {
   if (Array.isArray(data)) {
       data.forEach((value) => {
-        getLinkedDialogs(parent, value, ids);
+        if (!!!value.$designer) return;
+        getLinkedDialogs(parent + `["${value.$designer.id}"]`, value, ids);
       });
   }
   else if (typeof(data) === 'object') {
@@ -86,11 +87,38 @@ const getLinkedDialogs = (parent: string, data: any, ids: Map<string, LinkDetail
             return;
           }
       }
-      Object.values(data).forEach((value) => {
-        getLinkedDialogs(parent, value, ids);
+      Object.entries(data).forEach(([key, value]) => {
+        getLinkedDialogs(parent + `.${key}`, value, ids);
       });
   }
   return status;
+};
+
+const getEdgeInfo = (projectId: string, source: string, details: LinkDetail[]) => {
+  const list = details.map((detail, index) => {
+    const triggerIndex = detail.path.indexOf(']');
+    const trigger = detail.path.substring(1, triggerIndex + 1);
+    const focused = detail.path.substring(1);
+    const url = `/bot/${projectId}/dialogs/${source}?selected=${trigger}&focused=${focused}`;
+    return (
+      <Fragment key={index}>
+        <p>{detail.kind}</p>
+        <p><a href={url} target='_parent'>{focused}</a></p>
+      </Fragment>
+    );
+  });
+  return <div><p>Occurrences:</p>{list}</div>;
+};
+
+const getDialogInfo = (projectId: string, source: string, content: any) => {
+  return <div>
+    <p>This dialog has the following triggers:</p>
+    {content.triggers.map((trigger) => {
+      const name = trigger.$designer.name || trigger.intent || trigger.$kind;
+      const url = `/bot/${projectId}/dialogs/${source}?selected=triggers["${trigger.$designer.id}"]`;
+      return <p key={trigger.$designer.id}><a href={url} target='_parent'>{name}</a></p>;
+    })}
+  </div>;
 };
 
 const edgeTypes = {
@@ -100,6 +128,10 @@ const edgeTypes = {
 const Main: React.FC = () => {
   const { projectId, dialogs } = useProjectApi();
   const [elements, setElements] = useState([]);
+  const [info, setInfo] = useState(null);
+  const edgeOnClick = useCallback((data: any) => {
+    setInfo(data.info);
+  }, [info]);
   const items = useMemo(() => {
     const all: any[] = [];
     const edges = new Map<string, Map<string, LinkDetail[]>>();
@@ -143,10 +175,14 @@ const Main: React.FC = () => {
           return eles;
         });
       };
+      const info = getDialogInfo(projectId, d.id, d.content);
+      const infoOnClick = ()=>{
+        setInfo(info);
+      };
       const label = (
         <>
-          <div>{d.id}</div>
-          <div>
+          <div onClick={infoOnClick}>{d.id}</div>
+          <div onClick={infoOnClick}>
             <button onClick={linkOnClick}>Link</button>
             <button onClick={onlyOnClick}>Only</button>
             <a href={`/bot/${projectId}/dialogs/${d.id}`} target='_parent'>Open</a>
@@ -165,6 +201,7 @@ const Main: React.FC = () => {
     });
     edges.forEach((targets, source) => {
       targets.forEach((details, target) => {
+        const info = getEdgeInfo(projectId, source, details);
         all.push({
           id: `${source}->${target}`,
           source,
@@ -172,7 +209,11 @@ const Main: React.FC = () => {
           type: 'custom',
           arrowHeadType: 'arrowclosed',
           style: { stroke: 'gray' },
-          data: { text: `(${details.length})` },
+          data: {
+            text: `(${details.length})`,
+            info,
+            onClick: edgeOnClick,
+          },
         });
       });
     });
@@ -213,9 +254,12 @@ const Main: React.FC = () => {
           <button onClick={() => setDirectionOnClick('TB')}>vertical layout</button>
           <button onClick={() => setDirectionOnClick('LR')}>horizontal layout</button>
           <p>layout width: {width}</p>
-          <input type="range" min="50" max="500" defaultValue={width} onChange={(e) => setWidthOnChange(Number.parseInt(e.target.value))}></input>
+          <input type="range" min="50" max="500" defaultValue={width} onChange={(e) => setWidthOnChange(Number.parseInt(e.target.value))} style={{width: '100%'}}></input>
           <p>layout height: {height}</p>
-          <input type="range" min="50" max="500" defaultValue={height} onChange={(e) => setHeightOnChange(Number.parseInt(e.target.value))}></input>
+          <input type="range" min="50" max="500" defaultValue={height} onChange={(e) => setHeightOnChange(Number.parseInt(e.target.value))} style={{width: '100%'}}></input>
+          <div style={{maxHeight: '50vh', overflow: 'scroll'}}>
+            {info}
+          </div>
         </div>
       </ReactFlowProvider>
     </div>

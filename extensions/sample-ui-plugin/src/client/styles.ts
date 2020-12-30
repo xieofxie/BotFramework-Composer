@@ -102,4 +102,6 @@ export const controls = css`
   right: 10px;
   top: 10px;
   z-index: 10;
+  width: 300px;
+  background-color: #f3f2f199;
 `;

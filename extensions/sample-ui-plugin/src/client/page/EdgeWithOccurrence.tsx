@@ -1,6 +1,10 @@
 import React from 'react';
 import { getBezierPath, getMarkerEnd, EdgeText, getEdgeCenter } from 'react-flow-renderer';
 
+import EdgeTextWithClick from './EdgeTextWithClick';
+
+// https://reactflow.dev/examples/edges/
+
 export default function EdgeWithOccurrence({
   id,
   sourceX,
@@ -19,11 +23,12 @@ export default function EdgeWithOccurrence({
   const markerEnd = getMarkerEnd(arrowHeadType, markerEndId);
   return (
     <>
-      <path id={id} style={style} className="react-flow__edge-path" d={edgePath} markerEnd={markerEnd} onClick={()=>console.error(data.text)}/>
-      <EdgeText
+      <path id={id} style={style} className="react-flow__edge-path" d={edgePath} markerEnd={markerEnd}/>
+      <EdgeTextWithClick
         x={centerX}
         y={centerY}
-        label={data.text}/>
+        label={data.text}
+        onClick={(e)=>data.onClick(data)}/>
     </>
   );
 }
