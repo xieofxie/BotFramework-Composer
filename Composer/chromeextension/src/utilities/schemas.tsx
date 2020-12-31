@@ -1,6 +1,5 @@
 import { dialogGroups, DialogGroup } from '@bfc/shared';
 
-import plugins, { mergePluginConfigs } from '../clientdummies/plugins';
 import { simpleGet } from './utilities';
 
 // TODO not parallelizable
@@ -10,8 +9,6 @@ let schema: any = null;
 
 const uischemaUrl = 'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/main/Composer/packages/server/schemas/sdk.uischema';
 let uischema: any = null;
-
-let pluginConfig: any = null;
 
 export async function getSchemaAsync() : Promise<any> {
     if (!schema) {
@@ -33,18 +30,6 @@ export async function getUiSchemaAsync() : Promise<any> {
         });
     }
     return uischema;
-};
-
-export async function getPluginConfigAsync() : Promise<any> {
-    if (!pluginConfig) {
-        return await getUiSchemaAsync()
-        .then((uischema: any) => {
-            // Composer\packages\client\src\pages\design\DesignPage.tsx
-            pluginConfig = mergePluginConfigs({ uiSchema: uischema }, plugins);
-            return pluginConfig;
-        })
-    }
-    return pluginConfig;
 };
 
 let triggers: Set<string> = null;

@@ -13,10 +13,17 @@ interface JsonEditorProps {
   onError?: (error: string) => void;
 }
 
+// Composer\packages\lib\code-editor\src\JsonEditor.tsx
 const JsonEditor: React.FC<JsonEditorProps> = (props) => {
-  return <div></div>;
+  return (
+    <div>
+      <p>JsonEditor is not supported</p>
+      <p>{props.value}</p>
+    </div>
+  );
 };
 
+// Composer\packages\intellisense\src\components\Intellisense.tsx
 const Intellisense = React.memo(
   (props: {
     url: string;
@@ -39,7 +46,27 @@ const Intellisense = React.memo(
       onClickTextField: (event: React.MouseEvent<HTMLInputElement, MouseEvent>) => void;
     }) => JSX.Element;
   }) => {
-    return <div></div>;
+    const textFieldValue = props.value;
+    const focused = props.focused;
+    const cursorPosition = -1;
+    const onValueChanged = (newValue) => props.onChange(newValue);
+    const onKeyDownTextField = (e) => {};
+    const onKeyUpTextField = (e) => {};
+    const onClickTextField = (e) => {};
+    return (
+      <div>
+        <p>Intellisense is not supported</p>
+        {props.children({
+          textFieldValue,
+          focused,
+          cursorPosition,
+          onValueChanged,
+          onKeyDownTextField,
+          onKeyUpTextField,
+          onClickTextField,
+        })}
+      </div>
+    );
   }
 );
 

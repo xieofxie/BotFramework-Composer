@@ -8,8 +8,9 @@ import { editorDispatcher } from './editor';
 import { zoomDispatcher } from './zoom';
 import { rateInfoState } from './zoomState';
 
-export function useShell(): any {
-    const projectId = 'dummyProjectId';
+type EventSource = 'FlowEditor' | 'PropertyEditor' | 'DesignPage' | 'VaCreation';
+
+export function useShell(source: EventSource, projectId: string, currentDialog: any): any {
     const designPageLocation = useRecoilValue(designPageLocationState(projectId));
     const flowZoomRate = useRecoilValue(rateInfoState);
 
@@ -48,6 +49,7 @@ export function useShell(): any {
 
     const data = {
         projectId,
+        currentDialog,
         focusedEvent: selected,
         flowZoomRate,
     };

@@ -1,17 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import VisualDesigner from '@bfc/adaptive-flow';
-import AdaptiveForm, { resolveRef, getUIOptions } from '@bfc/adaptive-form';
-import { EditorExtension, useFormConfig } from '@bfc/extension-client';
+// Composer\packages\client\src\pages\design\DesignPage.tsx
 
-import { designPageLocationState } from '../clientdummies/botState';
+import React, { useEffect, useMemo, useState } from 'react';
+import { EditorExtension, PluginConfig } from '@bfc/extension-client';
+import { useSetRecoilState, useRecoilValue } from 'recoil';
+
+import { designPageLocationState, schemasState } from '../clientdummies/botState';
+import plugins, { mergePluginConfigs } from '../clientdummies/plugins';
+import { PropertyEditor } from '../clientdummies/PropertyEditor';
 import { useShell } from '../clientdummies/useShell';
+import { VisualEditor } from '../clientdummies/VisualEditor';
 import { isTrigger } from '../utilities/schemas';
 import { mergeStatus, getGitColor } from '../utilities/status';
-import { useSetRecoilState } from 'recoil';
 
 export interface TriggersRendererProps {
-    schema?: any;
-    plugins?: any;
+    schemas: any;
     data?: any;
     enableHide: boolean;
 }
@@ -23,8 +25,8 @@ const getGitStatus = (data: any) => {
             status = mergeStatus(status, getGitStatus(value));
         });
     }
-    else if (typeof(data) === 'object') {
-        if('$kind' in data){
+    else if (typeof (data) === 'object') {
+        if ('$kind' in data) {
             status = mergeStatus(status, data.gitStatus);
         }
         Object.values(data).forEach((value) => {
@@ -61,16 +63,22 @@ const renderOptions = (triggers: any[], hide: boolean) => {
             name = `${name}[${trigger.event}]`;
         }
         const value = formatSelected(index);
-        return (<option value={value} key={value} style={{background: getGitColor(trigger.gitStatus)}}>{name}</option>);
+        return (<option value={value} key={value} style={{ background: getGitColor(trigger.gitStatus) }}>{name}</option>);
     });
 };
 
-const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, data, enableHide}) => {
+const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchemas, data, enableHide }) => {
+    const projectId = 'dummyProjectId';
+    const schemas = useRecoilValue(schemasState(projectId));
+    const setSchemas = useSetRecoilState(schemasState(projectId));
+    useEffect(() => {
+        setSchemas(inputSchemas);
+    }, []);
+
     const [hide, setHide] = useState(enableHide ? true : false);
     const [selectValue, setSelectValue] = useState('');
 
-    const shellData = useShell();
-    const setFocusedEvent = useSetRecoilState(designPageLocationState(shellData.data.projectId));
+    const setFocusedEvent = useSetRecoilState(designPageLocationState(projectId));
 
     const renderData = useMemo(() => {
         if (enableHide) {
@@ -94,7 +102,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
         let selected = 0;
         if (enableHide) {
             renderData?.triggers?.every((trigger, index) => {
-                if(!!trigger.gitStatus){
+                if (!!trigger.gitStatus) {
                     selected = index;
                     return false;
                 }
@@ -105,9 +113,9 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
         setSelectValue(formatSelected(selected));
 
         if (renderData.triggers) {
-            setFocusedEvent({ selected: formatSelected(selected) });
+            setFocusedEvent((old) => { return { ...old, selected: formatSelected(selected) }; });
         } else {
-            setFocusedEvent({ selected: '.' });
+            setFocusedEvent((old) => { return { ...old, selected: '.' }; });
         }
     }, []);
 
@@ -139,7 +147,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
             if (!hide) {
                 if (!hideTriggers.includes(selectValue)) {
                     const value: string = hideTriggers[0];
-                    setFocusedEvent({ selected: value });
+                    setFocusedEvent((old) => { return { ...old, selected: value }; });
                     setSelectValue(value);
                 }
             }
@@ -149,58 +157,53 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({schema, plugins, dat
 
     const selectOnChange = (event) => {
         const value: string = event.target.value;
-        setFocusedEvent({ selected: value });
+        setFocusedEvent((old) => { return { ...old, selected: value }; });
         setSelectValue(value);
     };
 
-    // Composer\packages\client\src\pages\design\DesignPage.tsx
-    const onBlur = (e) => {};
-    const onFocus = (e) => {};
+    const onBlur = (e) => { };
+    const onFocus = (e) => { };
 
-    // Composer\packages\client\src\pages\design\PropertyEditor.tsx
-    const formUIOptions = useFormConfig();
-    const $uiOptions = useMemo(() => {
-        return getUIOptions(schema, formUIOptions);
-    }, [formUIOptions]);
-    const handleDataChange = (newData?: any) => {
-    };
-    const handleFocusTab = (focusedTab) => {
-    };
+    const currentDialog = useMemo(() => {
+        return { content: renderData };
+    }, [renderData]);
+    const shellForFlowEditor = useShell('FlowEditor', projectId, currentDialog);
+    const shellForPropertyEditor = useShell('PropertyEditor', projectId, currentDialog);
 
-    return (
+    const pluginConfig: PluginConfig = useMemo(() => {
+        const sdkUISchema = schemas?.ui?.content ?? {};
+        // const userUISchema = schemas?.uiOverrides?.content ?? {};
+        return mergePluginConfigs({ uiSchema: sdkUISchema }, plugins);
+      }, [schemas?.ui?.content, schemas?.uiOverrides?.content]);
+
+    return (schemas==null?<div>Should use a Suspense..</div>:
         <div>
             <div>
-                {enableHide?<button onClick={()=>{hideButtonOnClick()}}>Toggle Modified</button>:null}
+                {enableHide ? <button onClick={() => { hideButtonOnClick() }}>Toggle Modified</button> : null}
                 <select onChange={selectOnChange} value={selectValue}>
                     {hide ? hideOptions : allOptions}
                 </select>
             </div>
             <div>
                 <div style={{ float: 'left', width: '100%', height: '90vh', position: 'relative' }}>
-            {/*
+                    {/*
 // @ts-ignore */}
-                    <EditorExtension plugins={plugins} shell={shellData}>
-                        <VisualDesigner
-                            data={renderData}
-                            schema={schema}
+                    <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForFlowEditor}>
+                        <VisualEditor
+                            isRemoteSkill={false}
+                            openNewTriggerModal={() => { }}
                             onBlur={onBlur}
                             onFocus={onFocus}
                         />
                     </EditorExtension>
                 </div>
-                {/*
-                <div style={{ float: 'right', width: '20%', height: '90vh', overflow: 'scroll' }}>
-                    <AdaptiveForm
-                        errors={{}}
-                        focusedTab={''}
-                        formData={data}
-                        schema={schema}
-                        uiOptions={$uiOptions}
-                        onChange={handleDataChange}
-                        onFocusedTab={handleFocusTab}
-                    />
-                </div>
-                */}
+                {false &&
+                    <div style={{ float: 'right', width: '20%', height: '90vh', overflow: 'scroll' }}>
+                        <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForPropertyEditor}>
+                            <PropertyEditor key={''} />
+                        </EditorExtension>
+                    </div>
+                }
             </div>
         </div>
     );

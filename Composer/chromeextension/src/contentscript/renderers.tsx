@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import { RecoilRoot } from 'recoil';
 
 import TriggersRenderer from './TriggersRenderer';
-import { getSchemaAsync, getPluginConfigAsync } from '../utilities/schemas';
+import { getSchemaAsync, getUiSchemaAsync } from '../utilities/schemas';
 
 // return new elem
 export function configureShowHide(originalElem, id: string){
@@ -25,9 +25,13 @@ export function configureShowHide(originalElem, id: string){
 }
 
 export async function renderAsync(data: any, rootElem, enableHide: boolean){
+    const schemas = {
+        sdk: { content: await getSchemaAsync()},
+        ui: { content: await getUiSchemaAsync()},
+    };
     var elem =
         <RecoilRoot>
-            <TriggersRenderer schema={await getSchemaAsync()} plugins={await getPluginConfigAsync()} data={data} enableHide={enableHide}></TriggersRenderer>
+            <TriggersRenderer schemas={schemas} data={data} enableHide={enableHide}></TriggersRenderer>
         </RecoilRoot>;
     ReactDOM.render(elem, rootElem[0]);
 }
