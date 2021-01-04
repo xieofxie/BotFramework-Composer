@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { EditorExtension, PluginConfig } from '@bfc/extension-client';
 import { useSetRecoilState, useRecoilValue } from 'recoil';
+import Split from 'react-split'
 
 import { designPageLocationState, schemasState } from '../clientdummies/botState';
 import plugins, { mergePluginConfigs } from '../clientdummies/plugins';
@@ -200,8 +201,17 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
                     {hide ? hideOptions : allOptions}
                 </select>
             </div>
-            <div>
-                <div style={{ float: 'left', width: enableProperty?'70%':'100%', height: '90vh', position: 'relative' }}>
+            <Split direction='horizontal' sizes={[70, 30]} gutterStyle={
+                (dimension, gutterSize, index) => {
+                    return {
+                        width: '10px',
+                        float: 'left',
+                        height: '90vh',
+                        marginLeft: '0px',
+                        marginRight: '0px',
+                        backgroundColor: 'gray',
+                    }}}>
+                <div style={{ float: 'left', height: '90vh', position: 'relative' }}>
                     {/*
 // @ts-ignore */}
                     <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForFlowEditor}>
@@ -214,13 +224,13 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
                     </EditorExtension>
                 </div>
                 {!enableProperty ||
-                    <div style={{ float: 'right', width: '30%', height: '90vh', overflow: 'scroll' }}>
+                    <div style={{ float: 'left', height: '90vh', overflow: 'scroll' }}>
                         <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForPropertyEditor}>
                             <PropertyEditor key={''} />
                         </EditorExtension>
                     </div>
                 }
-            </div>
+            </Split>
         </div>
     );
 };
