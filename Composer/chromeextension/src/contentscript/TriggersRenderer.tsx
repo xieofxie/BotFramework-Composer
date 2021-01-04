@@ -16,6 +16,7 @@ export interface TriggersRendererProps {
     schemas: any;
     data?: any;
     enableHide: boolean;
+    enableProperty: boolean;
 }
 
 const getGitStatus = (data: any) => {
@@ -67,7 +68,7 @@ const renderOptions = (triggers: any[], hide: boolean) => {
     });
 };
 
-const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchemas, data, enableHide }) => {
+const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchemas, data, enableHide, enableProperty }) => {
     const projectId = 'dummyProjectId';
     const schemas = useRecoilValue(schemasState(projectId));
     const setSchemas = useSetRecoilState(schemasState(projectId));
@@ -110,10 +111,15 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
             });
         }
 
-        setSelectValue(formatSelected(selected));
+        const fSelected = formatSelected(selected);
+        setSelectValue(fSelected);
 
         if (renderData.triggers) {
-            setFocusedEvent((old) => { return { ...old, selected: formatSelected(selected) }; });
+            setFocusedEvent((old) => { return {
+                ...old,
+                selected: fSelected,
+                focused: fSelected,
+            };});
         } else {
             setFocusedEvent((old) => { return { ...old, selected: '.' }; });
         }
@@ -147,7 +153,11 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
             if (!hide) {
                 if (!hideTriggers.includes(selectValue)) {
                     const value: string = hideTriggers[0];
-                    setFocusedEvent((old) => { return { ...old, selected: value }; });
+                    setFocusedEvent((old) => { return {
+                        ...old,
+                        selected: value,
+                        focused: '',
+                    };});
                     setSelectValue(value);
                 }
             }
@@ -157,12 +167,18 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
 
     const selectOnChange = (event) => {
         const value: string = event.target.value;
-        setFocusedEvent((old) => { return { ...old, selected: value }; });
+        setFocusedEvent((old) => { return {
+            ...old,
+            selected: value,
+            focused: value,
+        };});
         setSelectValue(value);
     };
 
-    const onBlur = (e) => { };
-    const onFocus = (e) => { };
+    const onBlur = (e) => {
+    };
+    const onFocus = (e) => {
+    };
 
     const currentDialog = useMemo(() => {
         return { content: renderData };
@@ -185,7 +201,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
                 </select>
             </div>
             <div>
-                <div style={{ float: 'left', width: '100%', height: '90vh', position: 'relative' }}>
+                <div style={{ float: 'left', width: enableProperty?'70%':'100%', height: '90vh', position: 'relative' }}>
                     {/*
 // @ts-ignore */}
                     <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForFlowEditor}>
@@ -197,8 +213,8 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
                         />
                     </EditorExtension>
                 </div>
-                {false &&
-                    <div style={{ float: 'right', width: '20%', height: '90vh', overflow: 'scroll' }}>
+                {!enableProperty ||
+                    <div style={{ float: 'right', width: '30%', height: '90vh', overflow: 'scroll' }}>
                         <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForPropertyEditor}>
                             <PropertyEditor key={''} />
                         </EditorExtension>

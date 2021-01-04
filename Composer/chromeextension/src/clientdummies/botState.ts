@@ -11,6 +11,8 @@ export const designPageLocationState = atomFamily<any, string>({
     default: {
         dialogId: 'dummyDialogId',
         selected: '',
+        focused: '',
+        promptTab: '',
     },
 });
 

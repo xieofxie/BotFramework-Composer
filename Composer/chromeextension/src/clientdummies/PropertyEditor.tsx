@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AdaptiveForm, { resolveRef, getUIOptions } from '@bfc/adaptive-form';
 import { FormErrors, JSONSchema7, useFormConfig, useShellApi } from '@bfc/extension-client';
+import isEqual from 'lodash/isEqual';
+import debounce from 'lodash/debounce';
 import get from 'lodash/get';
 import { MicrosoftAdaptiveDialog } from '@bfc/shared';
 
@@ -28,6 +30,22 @@ const PropertyEditor: React.FC = () => {
         }
     }, [currentDialog, focusedSteps[0]]);
     const [localData, setLocalData] = useState(dialogData as MicrosoftAdaptiveDialog);
+    const syncData = useRef(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        debounce((shellData: any, localData: any) => {
+            if (!isEqual(shellData, localData)) {
+                setLocalData(shellData);
+            }
+        }, 300)
+    ).current;
+
+    useEffect(() => {
+        syncData(dialogData, localData);
+
+        return () => {
+            syncData.cancel();
+        };
+    }, [dialogData]);
 
     const formUIOptions = useFormConfig();
 
@@ -45,7 +63,7 @@ const PropertyEditor: React.FC = () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleDataChange = (newData?: any) => {
-        setLocalData(newData);
+        // setLocalData(newData);
     };
 
     const handleFocusTab = (focusedTab) => {

@@ -1,9 +1,10 @@
 // Composer\packages\client\src\shell\useShell.ts
 
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { PromptTab } from '@bfc/shared';
 
 import { applicationDispatcher } from './application';
-import { designPageLocationState } from './botState';
+import { designPageLocationState, schemasState } from './botState';
 import { editorDispatcher } from './editor';
 import { zoomDispatcher } from './zoom';
 import { rateInfoState } from './zoomState';
@@ -11,17 +12,24 @@ import { rateInfoState } from './zoomState';
 type EventSource = 'FlowEditor' | 'PropertyEditor' | 'DesignPage' | 'VaCreation';
 
 export function useShell(source: EventSource, projectId: string, currentDialog: any): any {
+    const schemas = useRecoilValue(schemasState(projectId));
     const designPageLocation = useRecoilValue(designPageLocationState(projectId));
+    const setDesignPageLocation = useSetRecoilState(designPageLocationState(projectId));
     const flowZoomRate = useRecoilValue(rateInfoState);
 
     const { setVisualEditorSelection } = editorDispatcher();
     const { setMessage } = applicationDispatcher();
     const { updateZoomRate } = zoomDispatcher();
 
-    const { selected } = designPageLocation;
+    const { dialogId, selected, focused, promptTab } = designPageLocation;
 
     async function focusSteps(subPaths: string[] = [], fragment?: string) {
         let dataPath: string = subPaths[0];
+        setDesignPageLocation((old) => { return {
+            ...old,
+            focused: dataPath,
+            promptTab: Object.values(PromptTab).find((value) => (fragment ?? '') === value),
+        }});
         /*
         if (source === FORM_EDITOR) {
             // nothing focused yet, prepend the selected path
@@ -31,6 +39,7 @@ export function useShell(source: EventSource, projectId: string, currentDialog: 
                 dataPath = `${focused}.${dataPath}`;
             }
         }
+        // Composer\packages\client\src\recoilModel\dispatchers\navigation.ts
         await focusTo(rootBotProjectId ?? projectId, projectId, dataPath, fragment ?? '');
         */
     }
@@ -49,9 +58,13 @@ export function useShell(source: EventSource, projectId: string, currentDialog: 
 
     const data = {
         projectId,
+        schemas,
         currentDialog,
         focusedEvent: selected,
         flowZoomRate,
+        focusedSteps: [focused],
+        focusedTab: promptTab,
+        forceDisabledActions: [],
     };
 
     return {

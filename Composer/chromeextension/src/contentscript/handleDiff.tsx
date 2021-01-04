@@ -55,7 +55,7 @@ export async function handleDiffAsync(){
         .then(async (text: string) => {
             const data = parseJsonWithStatus(text, status);
             const renderElem = configureShowHide(bodyElems[index], `renderdiff_${index}`);
-            await renderAsync(data, renderElem, true);
+            await renderAsync(data, renderElem, true, true);
         });
     });
 }

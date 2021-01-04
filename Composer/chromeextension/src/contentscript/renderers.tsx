@@ -24,14 +24,14 @@ export function configureShowHide(originalElem, id: string){
     return divElem;
 }
 
-export async function renderAsync(data: any, rootElem, enableHide: boolean){
+export async function renderAsync(data: any, rootElem, enableHide: boolean, enableProperty: boolean){
     const schemas = {
         sdk: { content: await getSchemaAsync()},
         ui: { content: await getUiSchemaAsync()},
     };
     var elem =
         <RecoilRoot>
-            <TriggersRenderer schemas={schemas} data={data} enableHide={enableHide}></TriggersRenderer>
+            <TriggersRenderer schemas={schemas} data={data} enableHide={enableHide} enableProperty={enableProperty}></TriggersRenderer>
         </RecoilRoot>;
     ReactDOM.render(elem, rootElem[0]);
 }

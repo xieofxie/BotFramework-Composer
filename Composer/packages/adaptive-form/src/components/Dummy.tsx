@@ -55,7 +55,7 @@ const Intellisense = React.memo(
     const onClickTextField = (e) => {};
     return (
       <div>
-        <p>Intellisense is not supported</p>
+        {true || <p>Intellisense is not supported</p>}
         {props.children({
           textFieldValue,
           focused,

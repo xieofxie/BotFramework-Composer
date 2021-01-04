@@ -8,7 +8,7 @@ export async function handleCodeBlockAsync(){
         const text = $(codeblock).find(":first-child").text();
         const data = JSON.parse(text);
         const renderElem = configureShowHide($(codeblock), 'rendercodeblock_' + index);
-        renderList.push(renderAsync(data, renderElem, false));
+        renderList.push(renderAsync(data, renderElem, false, false));
     });
     Promise.all(renderList);
 }
