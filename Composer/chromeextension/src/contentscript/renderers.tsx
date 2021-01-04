@@ -7,21 +7,45 @@ import TriggersRenderer from './TriggersRenderer';
 import { getSchemaAsync, getUiSchemaAsync } from '../utilities/schemas';
 
 // return new elem
-export function configureShowHide(originalElem, id: string){
-    console.error(`ConfigureShowHide: ${id}`);
-    originalElem.show();
-    var button = `<button id=${'button_'+id}>Toggle</button>`;
-    originalElem.before(button);
-    var buttonElem = $(`button#${'button_'+id}`);
-    var div = `<div id=${'div_'+id}></div>`;
-    originalElem.after(div);
-    var divElem = $(`div#${'div_'+id}`);
-    divElem.hide();
-    buttonElem.on('click', (event)=>{
-        originalElem.toggle();
-        divElem.toggle();
+export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: string[], id: string){
+    const res: JQuery<HTMLElement>[] = [];
+    const buttonIds: string[] = [];
+    let buttonStr = '';
+    buttons.forEach((button, index) => {
+        const thisId = `${id}_${index}`;
+        console.error(`ConfigureShowHides: ${thisId}`);
+        // button
+        const buttonId = `${thisId}_button`;
+        buttonIds.push(buttonId);
+        buttonStr += `<button id=${buttonId}>${button}</button>`;
+        // div
+        const divId = `${thisId}_div`;
+        const divStr = `<div id=${divId}></div>`;
+        originalElem.after(divStr);
+        const divElem = $(`div#${divId}`);
+        divElem.hide();
+        res.push(divElem);
     });
-    return divElem;
+    buttonStr = `<div>${buttonStr}</div>`;
+    originalElem.before(buttonStr);
+    buttonIds.forEach((buttonId, index) => {
+        const buttonElem = $(`button#${buttonId}`);
+        buttonElem.on('click', (event) => {
+            const isHidden = res[index].css('display') == 'none';
+            res.forEach((r) => r.hide());
+            if (isHidden) {
+                res[index].show();
+                originalElem.hide();
+            } else {
+                originalElem.show();
+            }
+        });
+    });
+    return res;
+}
+
+export function configureShowHide(originalElem: JQuery<HTMLElement>, id: string){
+    return configureShowHides(originalElem, ['Toggle'], id)[0];
 }
 
 export async function renderAsync(data: any, rootElem, enableHide: boolean, enableProperty: boolean){

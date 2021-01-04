@@ -38,10 +38,8 @@ export default function parseJsonWithStatus(data: string, lines: LineStatus[]) :
             }
         });
         if(best){
-            if(!('gitStatus' in best.obj)){
-                // console.error(best.obj);
-            }
             best.obj.gitStatus = mergeStatus(best.obj.gitStatus, line.status);
+            // console.error(best);
         }
     });
     return result.data;
