@@ -74,11 +74,11 @@ export async function handleDiffAsync(){
         .then(async (text: string) => {
             const data = parseJsonWithStatus(text, status);
             const renderElem = configureShowHides(bodyElems[index], ['Toggle Base', 'Toggle New'], `renderdiff_${index}`);
-            await renderAsync(data, renderElem[1], true, true);
+            await renderAsync(data, renderElem[1].divElem, true, true);
             // base
             const baseText = await simpleGet(baseUrls[index]);
             const baseData = parseJsonWithStatus(baseText, baseStatus);
-            await renderAsync(baseData, renderElem[0], true, true);
+            await renderAsync(baseData, renderElem[0].divElem, true, true);
         });
     }
 }

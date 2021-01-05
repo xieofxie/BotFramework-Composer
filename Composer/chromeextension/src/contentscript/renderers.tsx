@@ -8,7 +8,8 @@ import { getSchemaAsync, getUiSchemaAsync } from '../utilities/schemas';
 
 // return new elem
 export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: string[], id: string){
-    const res: JQuery<HTMLElement>[] = [];
+    const res = [];
+    const divElems: JQuery<HTMLElement>[] = [];
     const buttonIds: string[] = [];
     let buttonStr = '';
     buttons.forEach((button, index) => {
@@ -24,22 +25,39 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
         originalElem.after(divStr);
         const divElem = $(`div#${divId}`);
         divElem.hide();
-        res.push(divElem);
+        divElems.push(divElem);
     });
-    buttonStr = `<div>${buttonStr}</div>`;
-    originalElem.before(buttonStr);
+    const buttonContainerId = `${id}_buttonContainer`
+    buttonStr = `<div id=${buttonContainerId}>${buttonStr}</div>`;
+    $('body').append(buttonStr);
+
+    const originalElemTop = originalElem.offset().top;
+    const originalElemLeft = originalElem.offset().left;
+    const buttonContainer = $(`div#${buttonContainerId}`);
+    buttonContainer.css('position', 'absolute');
+    buttonContainer.css('top', `${originalElemTop}px`);
+    buttonContainer.css('left', `${originalElemLeft}px`);
+
+    const buttonPlaceholderId = `${id}_buttonPlaceholder`;
+    const buttonPlaceholderStr = `<div id=${buttonPlaceholderId}></div>`;
+    originalElem.before(buttonPlaceholderStr);
+    const height = buttonContainer.css('height');
+    $(`div#${buttonPlaceholderId}`).css('height', `${height}`);
+
+
     buttonIds.forEach((buttonId, index) => {
         const buttonElem = $(`button#${buttonId}`);
         buttonElem.on('click', (event) => {
-            const isHidden = res[index].css('display') == 'none';
-            res.forEach((r) => r.hide());
+            const isHidden = divElems[index].css('display') == 'none';
+            divElems.forEach((r) => r.hide());
             if (isHidden) {
-                res[index].show();
+                divElems[index].show();
                 originalElem.hide();
             } else {
                 originalElem.show();
             }
         });
+        res.push({divElem: divElems[index], buttonElem});
     });
     return res;
 }
