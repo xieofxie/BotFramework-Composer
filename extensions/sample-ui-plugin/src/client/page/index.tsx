@@ -3,31 +3,35 @@
 
 import React, { useMemo, useState, useCallback, useEffect, Fragment } from 'react';
 import { render, useProjectApi } from '@bfc/extension-client';
-import {
-  DetailsList,
-  ScrollablePane,
-  ScrollbarVisibility,
-  CheckboxVisibility,
-  DetailsListLayoutMode,
-  IColumn,
-  TextField,
-} from '@fluentui/react';
 import ReactFlow, {
   ReactFlowProvider,
-  addEdge,
-  removeElements,
   isNode,
   isEdge,
   ConnectionLineType,
   Position,
+  Node,
+  Edge,
+  ArrowHeadType,
 } from 'react-flow-renderer';
 import dagre from 'dagre';
+import { RecoilRoot, useRecoilState } from 'recoil';
 
-import { layoutflow, controls } from '../styles';
+import { layoutflow, controls, Colors } from '../styles';
 import EdgeWithOccurrence from './EdgeWithOccurrence';
-import { stringify } from 'querystring';
+import { showAllState, setVisibility, setEdgeStyle } from './others';
+import { NodeLabel } from './NodeLabel';
+
+interface LinkDetail {
+  id: string;
+  path: string;
+  kind: string;
+}
 
 const position = { x: 0, y: 0 };
+
+const edgeTypes = {
+  custom: EdgeWithOccurrence,
+};
 
 const getLayoutedElements = (elements, direction, width: number, height: number) => {
   const isHorizontal = direction === 'LR';
@@ -60,36 +64,29 @@ const getLayoutedElements = (elements, direction, width: number, height: number)
   });
 };
 
-interface LinkDetail {
-  id: string,
-  path: string,
-  kind: string,
-};
-
 const getLinkedDialogs = (parent: string, data: any, ids: Map<string, LinkDetail[]>) => {
   if (Array.isArray(data)) {
-      data.forEach((value) => {
-        if (!!!value.$designer) return;
-        getLinkedDialogs(parent + `["${value.$designer.id}"]`, value, ids);
-      });
-  }
-  else if (typeof(data) === 'object') {
-      if('$kind' in data){
-          if (data.$kind == 'Microsoft.BeginDialog' || data.$kind == 'Microsoft.ReplaceDialog') {
-            if (!ids.has(data.dialog)) {
-              ids.set(data.dialog, []);
-            }
-            ids.get(data.dialog).push({
-              id: data.dialog,
-              path: parent,
-              kind: data.$kind,
-            });
-            return;
-          }
+    data.forEach((value) => {
+      if (!!!value.$designer) return;
+      getLinkedDialogs(parent + `["${value.$designer.id}"]`, value, ids);
+    });
+  } else if (typeof data === 'object') {
+    if ('$kind' in data) {
+      if (data.$kind == 'Microsoft.BeginDialog' || data.$kind == 'Microsoft.ReplaceDialog') {
+        if (!ids.has(data.dialog)) {
+          ids.set(data.dialog, []);
+        }
+        ids.get(data.dialog).push({
+          id: data.dialog,
+          path: parent,
+          kind: data.$kind,
+        });
+        return;
       }
-      Object.entries(data).forEach(([key, value]) => {
-        getLinkedDialogs(parent + `.${key}`, value, ids);
-      });
+    }
+    Object.entries(data).forEach(([key, value]) => {
+      getLinkedDialogs(parent + `.${key}`, value, ids);
+    });
   }
   return status;
 };
@@ -103,96 +100,55 @@ const getEdgeInfo = (projectId: string, source: string, details: LinkDetail[]) =
     return (
       <Fragment key={index}>
         <p>{detail.kind}</p>
-        <p><a href={url} target='_parent'>{focused}</a></p>
+        <p>
+          <a href={url} target="_parent">
+            {focused}
+          </a>
+        </p>
       </Fragment>
     );
   });
-  return <div><p>Occurrences:</p>{list}</div>;
-};
-
-const getDialogInfo = (projectId: string, source: string, content: any) => {
-  return <div>
-    <p>This dialog has the following triggers:</p>
-    {content.triggers.map((trigger) => {
-      const name = trigger.$designer.name || trigger.intent || trigger.$kind;
-      const url = `/bot/${projectId}/dialogs/${source}?selected=triggers["${trigger.$designer.id}"]`;
-      return <p key={trigger.$designer.id}><a href={url} target='_parent'>{name}</a></p>;
-    })}
-  </div>;
-};
-
-const edgeTypes = {
-  custom: EdgeWithOccurrence,
+  return (
+    <div>
+      <p>Occurrences:</p>
+      {list}
+    </div>
+  );
 };
 
 const Main: React.FC = () => {
   const { projectId, dialogs } = useProjectApi();
-  const [elements, setElements] = useState([]);
+  const [elements, setElements] = useState<(Node | Edge)[]>([]);
+  const [selectEle, setSelectEle] = useState(null);
   const [info, setInfo] = useState(null);
-  const edgeOnClick = useCallback((data: any) => {
-    setInfo(data.info);
-  }, [info]);
-  const items = useMemo(() => {
-    const all: any[] = [];
+  const [showAll, setShowAll] = useRecoilState(showAllState);
+
+  const edgeOnClick = useCallback(
+    (data: any) => {
+      setInfo(data.info);
+    },
+    [setInfo]
+  );
+
+  const items: (Node | Edge)[] = useMemo(() => {
+    const all: (Node | Edge)[] = [];
     const edges = new Map<string, Map<string, LinkDetail[]>>();
 
     dialogs.forEach((d) => {
-      const linkOnClick = ()=>{
-        setElements((elements) => {
-          return elements.map((e) => {
-            e.isHidden = false;
-            if(!isEdge(e)) return e;
-            if(e.source === d.id || e.target == d.id){
-              e.style = { stroke: 'black', strokeWidth: 4 };
-            }else{
-              e.style = { stroke: 'gray' };
-            }
-            return e;
-          });
-        });
-      };
-      const onlyOnClick = ()=>{
-        setElements((elements) => {
-          const shown = new Set<string>();
-          shown.add(d.id);
-          const eles = elements.map((e) => {
-            e.isHidden = true;
-            if(!isEdge(e)) return e;
-            if(e.source === d.id || e.target == d.id){
-              e.isHidden = false;
-              shown.add(e.source);
-              shown.add(e.target);
-              e.style = { stroke: 'black', strokeWidth: 4 };
-            }
-            return e;
-          });
-          eles.forEach((e) => {
-            if(!isNode(e)) return;
-            if (shown.has(e.id)) {
-              e.isHidden = false;
-            }
-          });
-          return eles;
-        });
-      };
-      const info = getDialogInfo(projectId, d.id, d.content);
-      const infoOnClick = ()=>{
-        setInfo(info);
-      };
       const label = (
         <>
-          <div onClick={infoOnClick}>{d.id}</div>
-          <div onClick={infoOnClick}>
-            <button onClick={linkOnClick}>Link</button>
-            <button onClick={onlyOnClick}>Only</button>
-            <a href={`/bot/${projectId}/dialogs/${d.id}`} target='_parent'>Open</a>
-          </div>
+          <NodeLabel projectId={projectId} dialog={d} setSelectEle={setSelectEle} setElements={setElements}></NodeLabel>
         </>
       );
-
       all.push({
         id: d.id,
-        data: { label },
+        isHidden: true,
+        style: { backgroundColor: d.isRoot ? Colors.blue1 : null },
+        data: {
+          isRoot: d.isRoot,
+          info,
+          label,
+        },
         position,
       });
       const ids = new Map<string, LinkDetail[]>();
@@ -204,10 +160,11 @@ const Main: React.FC = () => {
         const info = getEdgeInfo(projectId, source, details);
         all.push({
           id: `${source}->${target}`,
+          isHidden: true,
           source,
           target,
           type: 'custom',
-          arrowHeadType: 'arrowclosed',
+          arrowHeadType: ArrowHeadType.Arrow,
           style: { stroke: 'gray' },
           data: {
             text: `(${details.length})`,
@@ -221,24 +178,61 @@ const Main: React.FC = () => {
     return all;
   }, [dialogs]);
 
+  const setShowAllOnChange = useCallback(
+    (event) => {
+      const newShowAll = !showAll;
+      setShowAll(newShowAll);
+      if (newShowAll) {
+        setElements((elements) => {
+          return setVisibility(elements, null);
+        });
+      } else {
+        setElements((elements) => {
+          return setVisibility(elements, selectEle);
+        });
+      }
+    },
+    [showAll, setShowAll, selectEle, setElements]
+  );
+
+  // layout variables
   const [direction, setDirection] = useState('TB');
   const [width, setWidth] = useState(150);
-  const [height, setHeight] = useState(50);
-  const setDirectionOnClick = useCallback((value) => {
-    setDirection(value);
-    setElements(getLayoutedElements(items, value, width, height))
-  }, [items, direction, width, height]);
-  const setWidthOnChange = useCallback((value) => {
-    setWidth(value);
-    setElements(getLayoutedElements(items, direction, value, height))
-  }, [items, direction, width, height]);
-  const setHeightOnChange = useCallback((value) => {
-    setHeight(value);
-    setElements(getLayoutedElements(items, direction, width, value))
-  }, [items, direction, width, height]);
+  const [height, setHeight] = useState(150);
+  const setDirectionOnClick = useCallback(
+    (value) => {
+      setDirection(value);
+      setElements(getLayoutedElements(items, value, width, height));
+    },
+    [setElements, items, setDirection, width, height]
+  );
+  const setWidthOnChange = useCallback(
+    (value) => {
+      setWidth(value);
+      setElements(getLayoutedElements(items, direction, value, height));
+    },
+    [setElements, items, direction, setWidth, height]
+  );
+  const setHeightOnChange = useCallback(
+    (value) => {
+      setHeight(value);
+      setElements(getLayoutedElements(items, direction, width, value));
+    },
+    [setElements, items, direction, width, setHeight]
+  );
 
-  useEffect(()=>{
-    setElements(getLayoutedElements(items, direction, width, height));
+  useEffect(() => {
+    let root = '';
+    items.every((value) => {
+      if (value.data.isRoot) {
+        root = value.id;
+        return false;
+      }
+    });
+    setSelectEle(root);
+    let newItems = setVisibility(items, showAll ? null : root);
+    newItems = setEdgeStyle(newItems, root);
+    setElements(getLayoutedElements(newItems, direction, width, height));
   }, []);
 
   return (
@@ -251,19 +245,42 @@ const Main: React.FC = () => {
           edgeTypes={edgeTypes}
         />
         <div className={controls}>
-          <button onClick={() => setDirectionOnClick('TB')}>vertical layout</button>
-          <button onClick={() => setDirectionOnClick('LR')}>horizontal layout</button>
-          <p>layout width: {width}</p>
-          <input type="range" min="50" max="500" defaultValue={width} onChange={(e) => setWidthOnChange(Number.parseInt(e.target.value))} style={{width: '100%'}}></input>
-          <p>layout height: {height}</p>
-          <input type="range" min="50" max="500" defaultValue={height} onChange={(e) => setHeightOnChange(Number.parseInt(e.target.value))} style={{width: '100%'}}></input>
-          <div style={{maxHeight: '50vh', overflow: 'scroll'}}>
-            {info}
+          <div style={{ border: `1px solid ${Colors.gray0}` }}>
+            <label>
+              <input type="checkbox" defaultChecked={showAll} onChange={setShowAllOnChange} />
+              Show All
+            </label>
+            <button onClick={() => setDirectionOnClick('TB')}>Vertical layout</button>
+            <button onClick={() => setDirectionOnClick('LR')}>Horizontal layout</button>
+            <p>Layout width: {width}</p>
+            <input
+              type="range"
+              min="50"
+              max="500"
+              defaultValue={width}
+              onChange={(e) => setWidthOnChange(Number.parseInt(e.target.value))}
+              style={{ width: '100%' }}
+            ></input>
+            <p>Layout height: {height}</p>
+            <input
+              type="range"
+              min="50"
+              max="500"
+              defaultValue={height}
+              onChange={(e) => setHeightOnChange(Number.parseInt(e.target.value))}
+              style={{ width: '100%' }}
+            ></input>
           </div>
+
+          <div style={{ maxHeight: '50vh', overflow: 'scroll' }}>{info}</div>
         </div>
       </ReactFlowProvider>
     </div>
   );
 };
 
-render(<Main />);
+render(
+  <RecoilRoot>
+    <Main />
+  </RecoilRoot>
+);

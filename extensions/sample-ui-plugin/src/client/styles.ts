@@ -88,6 +88,14 @@ export const saveButton = css`
   margin-left: 8px;
 `;
 
+export class Colors {
+  static gray0 = 'silver';
+  static gray1 = '#D7D7D7';
+  static gray2 = '#f6f6f6';
+  static blue0 = '#0078d4';
+  static blue1 = '#56ccf2';
+}
+
 export const layoutflow = css`
   flex-grow: 1;
   position: relative;
@@ -103,5 +111,5 @@ export const controls = css`
   top: 10px;
   z-index: 10;
   width: 300px;
-  background-color: #f3f2f199;
+  background-color: ${Colors.gray2};
 `;
