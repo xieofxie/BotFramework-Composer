@@ -12,6 +12,8 @@ import ReactFlow, {
   Node,
   Edge,
   ArrowHeadType,
+  MiniMap,
+  Controls,
 } from 'react-flow-renderer';
 import dagre from 'dagre';
 import { RecoilRoot, useRecoilState } from 'recoil';
@@ -22,7 +24,6 @@ import { showAllState, setVisibility, setEdgeStyle } from './others';
 import { NodeLabel } from './NodeLabel';
 
 interface LinkDetail {
-  id: string;
   path: string;
   kind: string;
 }
@@ -77,7 +78,6 @@ const getLinkedDialogs = (parent: string, data: any, ids: Map<string, LinkDetail
           ids.set(data.dialog, []);
         }
         ids.get(data.dialog).push({
-          id: data.dialog,
           path: parent,
           kind: data.$kind,
         });
@@ -91,18 +91,38 @@ const getLinkedDialogs = (parent: string, data: any, ids: Map<string, LinkDetail
   return status;
 };
 
-const getEdgeInfo = (projectId: string, source: string, details: LinkDetail[]) => {
+const getEdgeInfo = (projectId: string, source: string, data: any, target: string, details: LinkDetail[]) => {
   const list = details.map((detail, index) => {
-    const triggerIndex = detail.path.indexOf(']');
-    const trigger = detail.path.substring(1, triggerIndex + 1);
+    const triggerEnd = detail.path.indexOf(']');
+    const triggerBegin = detail.path.indexOf('[');
+    // the path is tooo weird
+    const triggerId = detail.path.substring(triggerBegin + 2, triggerEnd - 1);
+    const trigger = detail.path.substring(1, triggerEnd + 1);
     const focused = detail.path.substring(1);
     const url = `/bot/${projectId}/dialogs/${source}?selected=${trigger}&focused=${focused}`;
+    let triggerInfo = '';
+    data.triggers.every((trigger) => {
+      if (trigger.$designer.id == triggerId) {
+        if (!!trigger.$designer.name) {
+          triggerInfo = trigger.$designer.name;
+          return false;
+        }
+        let name = trigger.$kind;
+        if (name == 'Microsoft.OnIntent') {
+          name = `${name}[${trigger.intent}]`;
+        } else if (name == 'Microsoft.OnDialogEvent') {
+          name = `${name}[${trigger.event}]`;
+        }
+        triggerInfo = name;
+        return false;
+      }
+      return true;
+    });
     return (
       <Fragment key={index}>
-        <p>{detail.kind}</p>
         <p>
           <a href={url} target="_parent">
-            {focused}
+            {triggerInfo}:{detail.kind}
           </a>
         </p>
       </Fragment>
@@ -110,7 +130,9 @@ const getEdgeInfo = (projectId: string, source: string, details: LinkDetail[]) =
   });
   return (
     <div>
-      <p>Occurrences:</p>
+      <p>
+        {source} calls {target} in:
+      </p>
       {list}
     </div>
   );
@@ -133,6 +155,7 @@ const Main: React.FC = () => {
   const items: (Node | Edge)[] = useMemo(() => {
     const all: (Node | Edge)[] = [];
     const edges = new Map<string, Map<string, LinkDetail[]>>();
+    const dialogsMap = new Map<string, any>();
 
     dialogs.forEach((d) => {
       const label = (
@@ -154,10 +177,11 @@ const Main: React.FC = () => {
       const ids = new Map<string, LinkDetail[]>();
       getLinkedDialogs('', d.content, ids);
       edges.set(d.id, ids);
+      dialogsMap.set(d.id, d.content);
     });
     edges.forEach((targets, source) => {
       targets.forEach((details, target) => {
-        const info = getEdgeInfo(projectId, source, details);
+        const info = getEdgeInfo(projectId, source, dialogsMap.get(source), target, details);
         all.push({
           id: `${source}->${target}`,
           isHidden: true,
@@ -228,6 +252,7 @@ const Main: React.FC = () => {
         root = value.id;
         return false;
       }
+      return true;
     });
     setSelectEle(root);
     let newItems = setVisibility(items, showAll ? null : root);
@@ -243,7 +268,23 @@ const Main: React.FC = () => {
           elements={elements}
           connectionLineType={ConnectionLineType.SmoothStep}
           edgeTypes={edgeTypes}
-        />
+        >
+          <MiniMap
+            nodeStrokeColor={(n: Node) => {
+              if (n.style?.background) return `${n.style.background}`;
+              if (n.type === 'input') return '#0041d0';
+              if (n.type === 'output') return '#ff0072';
+              if (n.type === 'default') return '#1a192b';
+              return '#eee';
+            }}
+            nodeColor={(n: Node) => {
+              if (n.style?.background) return `${n.style.background}`;
+              return '#fff';
+            }}
+            nodeBorderRadius={2}
+          />
+          <Controls />
+        </ReactFlow>
         <div className={controls}>
           <div style={{ border: `1px solid ${Colors.gray0}` }}>
             <label>
