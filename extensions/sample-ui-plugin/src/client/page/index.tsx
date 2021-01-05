@@ -15,12 +15,11 @@ import ReactFlow, {
   MiniMap,
   Controls,
 } from 'react-flow-renderer';
-import dagre from 'dagre';
 import { RecoilRoot, useRecoilState } from 'recoil';
 
-import { layoutflow, controls, Colors } from '../styles';
+import { layoutflow, controls, Colors, mininode } from '../styles';
 import EdgeWithOccurrence from './EdgeWithOccurrence';
-import { showAllState, setVisibility, setEdgeStyle } from './others';
+import { showAllState, setVisibility, setSelectStyle, autoLayoutState, getLayoutedElements, widthState, heightState, directionState } from './others';
 import { NodeLabel } from './NodeLabel';
 
 interface LinkDetail {
@@ -32,37 +31,6 @@ const position = { x: 0, y: 0 };
 
 const edgeTypes = {
   custom: EdgeWithOccurrence,
-};
-
-const getLayoutedElements = (elements, direction, width: number, height: number) => {
-  const isHorizontal = direction === 'LR';
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction });
-  elements.forEach((el) => {
-    if (el.isHidden) return;
-    if (isNode(el)) {
-      dagreGraph.setNode(el.id, { width, height });
-    } else {
-      dagreGraph.setEdge(el.source, el.target);
-    }
-  });
-  dagre.layout(dagreGraph);
-  return elements.map((el) => {
-    if (el.isHidden) return el;
-    if (isNode(el)) {
-      const nodeWithPosition = dagreGraph.node(el.id);
-      el.targetPosition = isHorizontal ? Position.Left : Position.Top;
-      el.sourcePosition = isHorizontal ? Position.Right : Position.Bottom;
-      // unfortunately we need this little hack to pass a slighltiy different position
-      // in order to notify react flow about the change
-      el.position = {
-        x: nodeWithPosition.x + Math.random() / 1000,
-        y: nodeWithPosition.y,
-      };
-    }
-    return el;
-  });
 };
 
 const getLinkedDialogs = (parent: string, data: any, ids: Map<string, LinkDetail[]>) => {
@@ -144,6 +112,11 @@ const Main: React.FC = () => {
   const [selectEle, setSelectEle] = useState(null);
   const [info, setInfo] = useState(null);
   const [showAll, setShowAll] = useRecoilState(showAllState);
+  // layout variables
+  const [autoLayout, setAutoLayout] = useRecoilState(autoLayoutState);
+  const [direction, setDirection] = useRecoilState(directionState);
+  const [width, setWidth] = useRecoilState(widthState);
+  const [height, setHeight] = useRecoilState(heightState);
 
   const edgeOnClick = useCallback(
     (data: any) => {
@@ -166,7 +139,10 @@ const Main: React.FC = () => {
       all.push({
         id: d.id,
         isHidden: true,
-        style: { backgroundColor: d.isRoot ? Colors.blue1 : null },
+        style: {
+          backgroundColor: d.isRoot ? Colors.blue1 : Colors.background,
+          borderColor: Colors.gray1,
+        },
         data: {
           isRoot: d.isRoot,
           info,
@@ -189,7 +165,7 @@ const Main: React.FC = () => {
           target,
           type: 'custom',
           arrowHeadType: ArrowHeadType.Arrow,
-          style: { stroke: 'gray' },
+          style: { stroke: Colors.gray1 },
           data: {
             text: `(${details.length})`,
             info,
@@ -219,10 +195,7 @@ const Main: React.FC = () => {
     [showAll, setShowAll, selectEle, setElements]
   );
 
-  // layout variables
-  const [direction, setDirection] = useState('TB');
-  const [width, setWidth] = useState(150);
-  const [height, setHeight] = useState(150);
+  // layout cbs
   const setDirectionOnClick = useCallback(
     (value) => {
       setDirection(value);
@@ -256,7 +229,7 @@ const Main: React.FC = () => {
     });
     setSelectEle(root);
     let newItems = setVisibility(items, showAll ? null : root);
-    newItems = setEdgeStyle(newItems, root);
+    newItems = setSelectStyle(newItems, root);
     setElements(getLayoutedElements(newItems, direction, width, height));
   }, []);
 
@@ -271,26 +244,35 @@ const Main: React.FC = () => {
         >
           <MiniMap
             nodeStrokeColor={(n: Node) => {
-              if (n.style?.background) return `${n.style.background}`;
-              if (n.type === 'input') return '#0041d0';
-              if (n.type === 'output') return '#ff0072';
-              if (n.type === 'default') return '#1a192b';
-              return '#eee';
+              if (n.style?.borderColor) return `${n.style.borderColor}`;
+              return Colors.gray1;
             }}
             nodeColor={(n: Node) => {
-              if (n.style?.background) return `${n.style.background}`;
-              return '#fff';
+              if (n.style?.backgroundColor) return `${n.style.backgroundColor}`;
+              return Colors.background;
             }}
-            nodeBorderRadius={2}
+            nodeClassName={mininode}
           />
           <Controls />
         </ReactFlow>
         <div className={controls}>
-          <div style={{ border: `1px solid ${Colors.gray0}` }}>
-            <label>
+          <div style={{ border: `1px solid ${Colors.gray1}` }}>
+            <p>
+              <input
+                type="checkbox"
+                defaultChecked={autoLayout}
+                onChange={() => {
+                  setAutoLayout((v) => {
+                    return !v;
+                  });
+                }}
+              />
+              Auto Layout
+            </p>
+            <p>
               <input type="checkbox" defaultChecked={showAll} onChange={setShowAllOnChange} />
               Show All
-            </label>
+            </p>
             <button onClick={() => setDirectionOnClick('TB')}>Vertical layout</button>
             <button onClick={() => setDirectionOnClick('LR')}>Horizontal layout</button>
             <p>Layout width: {width}</p>
@@ -313,7 +295,7 @@ const Main: React.FC = () => {
             ></input>
           </div>
 
-          <div style={{ maxHeight: '50vh', overflow: 'scroll' }}>{info}</div>
+          <div style={{ border: `1px solid ${Colors.gray1}`, maxHeight: '50vh', overflow: 'scroll' }}>{info}</div>
         </div>
       </ReactFlowProvider>
     </div>

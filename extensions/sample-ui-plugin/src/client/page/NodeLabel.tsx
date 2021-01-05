@@ -2,7 +2,7 @@ import React from 'react';
 import { useRecoilValue } from 'recoil';
 import { DialogInfo } from '@bfc/extension-client';
 
-import { showAllState, setVisibility, setEdgeStyle } from './others';
+import { showAllState, setVisibility, setSelectStyle, autoLayoutState, getLayoutedElements, widthState, heightState, directionState } from './others';
 
 export interface NodeLabelProps {
   projectId: string;
@@ -13,12 +13,21 @@ export interface NodeLabelProps {
 
 export const NodeLabel = ({ projectId, dialog, setSelectEle, setElements }: NodeLabelProps) => {
   const showAll = useRecoilValue(showAllState);
+  const autoLayout = useRecoilValue(autoLayoutState);
+  const width = useRecoilValue(widthState);
+  const height = useRecoilValue(heightState);
+  const direction = useRecoilValue(directionState);
 
   const linkOnClick = (id: string) => {
     setSelectEle(id);
     setElements((elements) => {
       let newEles = setVisibility(elements, showAll ? null : id);
-      return setEdgeStyle(newEles, id);
+      newEles = setSelectStyle(newEles, id);
+      if (autoLayout) {
+        return getLayoutedElements(newEles, direction, width, height);
+      } else {
+          return newEles;
+      }
     });
   };
   return (

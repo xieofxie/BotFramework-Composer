@@ -89,11 +89,17 @@ export const saveButton = css`
 `;
 
 export class Colors {
+  // highlight
   static gray0 = 'silver';
+  // normal
   static gray1 = '#D7D7D7';
+  // background
   static gray2 = '#f6f6f6';
+  // highlight
   static blue0 = '#0078d4';
+  // normal
   static blue1 = '#56ccf2';
+  static background = 'white';
 }
 
 export const layoutflow = css`
@@ -112,4 +118,8 @@ export const controls = css`
   z-index: 10;
   width: 300px;
   background-color: ${Colors.gray2};
+`;
+
+export const mininode = css`
+  stroke-width: 20;
 `;
