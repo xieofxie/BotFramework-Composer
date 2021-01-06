@@ -123,3 +123,7 @@ export const controls = css`
 export const mininode = css`
   stroke-width: 20;
 `;
+
+export const nodecontrol = css`
+  margin: 1px;
+`;

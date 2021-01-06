@@ -15,11 +15,21 @@ import ReactFlow, {
   MiniMap,
   Controls,
 } from 'react-flow-renderer';
-import { RecoilRoot, useRecoilState } from 'recoil';
+import { RecoilRoot, useRecoilState, useRecoilValue } from 'recoil';
 
 import { layoutflow, controls, Colors, mininode } from '../styles';
 import EdgeWithOccurrence from './EdgeWithOccurrence';
-import { showAllState, setVisibility, setSelectStyle, autoLayoutState, getLayoutedElements, widthState, heightState, directionState } from './others';
+import {
+  showAllState,
+  setVisibility,
+  setSelectStyle,
+  autoLayoutState,
+  getLayoutedElements,
+  widthState,
+  heightState,
+  directionState,
+  alwaysState,
+} from './others';
 import { NodeLabel } from './NodeLabel';
 
 interface LinkDetail {
@@ -112,6 +122,7 @@ const Main: React.FC = () => {
   const [selectEle, setSelectEle] = useState(null);
   const [info, setInfo] = useState(null);
   const [showAll, setShowAll] = useRecoilState(showAllState);
+  const always = useRecoilValue(alwaysState);
   // layout variables
   const [autoLayout, setAutoLayout] = useRecoilState(autoLayoutState);
   const [direction, setDirection] = useRecoilState(directionState);
@@ -184,11 +195,11 @@ const Main: React.FC = () => {
       setShowAll(newShowAll);
       if (newShowAll) {
         setElements((elements) => {
-          return setVisibility(elements, null);
+          return setVisibility(elements, null, always);
         });
       } else {
         setElements((elements) => {
-          return setVisibility(elements, selectEle);
+          return setVisibility(elements, selectEle, always);
         });
       }
     },
@@ -228,7 +239,7 @@ const Main: React.FC = () => {
       return true;
     });
     setSelectEle(root);
-    let newItems = setVisibility(items, showAll ? null : root);
+    let newItems = setVisibility(items, showAll ? null : root, always);
     newItems = setSelectStyle(newItems, root);
     setElements(getLayoutedElements(newItems, direction, width, height));
   }, []);

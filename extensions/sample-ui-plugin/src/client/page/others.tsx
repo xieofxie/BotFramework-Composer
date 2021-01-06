@@ -28,13 +28,18 @@ export const directionState = atom({
   default: 'TB',
 });
 
-export const setVisibility = (elements: (Node | Edge)[], id: string) => {
+export const alwaysState = atom({
+  key: 'alwaysState',
+  default: new Set<string>(),
+});
+
+export const setVisibility = (elements: (Node | Edge)[], id: string, always: Set<string>) => {
   const nodes = new Set<string>();
   const res = elements.map((e) => {
     if (id == null) {
       e.isHidden = false;
     } else if (isEdge(e)) {
-      if (e.source === id || e.target == id) {
+      if (e.source == id || e.target == id || always.has(e.source) || always.has(e.target)) {
         e.isHidden = false;
         nodes.add(e.source);
         nodes.add(e.target);
