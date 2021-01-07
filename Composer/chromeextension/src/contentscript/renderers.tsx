@@ -27,8 +27,7 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
         divElem.hide();
         divElems.push(divElem);
     });
-    const buttonContainerId = `${id}_buttonContainer`
-    buttonStr = `<div id=${buttonContainerId}>${buttonStr}</div>`;
+    buttonStr = `<div>${buttonStr}</div>`;
     originalElem.before(buttonStr);
     buttonIds.forEach((buttonId, index) => {
         const buttonElem = $(`div#${buttonId}`);
