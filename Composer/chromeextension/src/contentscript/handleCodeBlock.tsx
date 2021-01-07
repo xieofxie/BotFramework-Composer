@@ -27,7 +27,7 @@ async function renderCodeBlockAsync() {
     clearCurrentElems();
     let renderList = [];
     $("[lang='declarative']").each(function(index, codeblock) {
-        if ($(codeblock).parents().eq(5).hasClass("edit-comment-hide")) {
+        if ($(codeblock).parents().eq(5).css("display") == "none") {
             return;
         }
         const text = $(codeblock).find(":first-child").text();

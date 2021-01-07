@@ -18,7 +18,7 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
         // button
         const buttonId = `${thisId}_button`;
         buttonIds.push(buttonId);
-        buttonStr += `<button id=${buttonId}>${button}</button>`;
+        buttonStr += `<div id=${buttonId}>${button}</div>`;
         // div
         const divId = `${thisId}_div`;
         const divStr = `<div id=${divId}></div>`;
@@ -29,24 +29,9 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
     });
     const buttonContainerId = `${id}_buttonContainer`
     buttonStr = `<div id=${buttonContainerId}>${buttonStr}</div>`;
-    $('body').append(buttonStr);
-
-    const originalElemTop = originalElem.offset().top;
-    const originalElemLeft = originalElem.offset().left;
-    const buttonContainer = $(`div#${buttonContainerId}`);
-    buttonContainer.css('position', 'absolute');
-    buttonContainer.css('top', `${originalElemTop}px`);
-    buttonContainer.css('left', `${originalElemLeft}px`);
-
-    const buttonPlaceholderId = `${id}_buttonPlaceholder`;
-    const buttonPlaceholderStr = `<div id=${buttonPlaceholderId}></div>`;
-    originalElem.before(buttonPlaceholderStr);
-    const height = buttonContainer.css('height');
-    $(`div#${buttonPlaceholderId}`).css('height', `${height}`);
-
-
+    originalElem.before(buttonStr);
     buttonIds.forEach((buttonId, index) => {
-        const buttonElem = $(`button#${buttonId}`);
+        const buttonElem = $(`div#${buttonId}`);
         buttonElem.on('click', (event) => {
             const isHidden = divElems[index].css('display') == 'none';
             divElems.forEach((r) => r.hide());
@@ -57,6 +42,16 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
                 originalElem.show();
             }
         });
+        buttonElem.css('display', 'inline-block');
+        buttonElem.css('color', 'white');
+        buttonElem.css('background-color', '#3362D5');
+        buttonElem.hover(function(){
+            $(this).css("background-color","#2C53B1");
+        },function(){
+            $(this).css("background-color","#3362D5");
+        });
+        buttonElem.css('user-select', 'none');
+        buttonElem.css('padding', '4px');
         res.push({divElem: divElems[index], buttonElem});
     });
     return res;
