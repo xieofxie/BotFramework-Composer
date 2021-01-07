@@ -27,9 +27,6 @@ async function renderCodeBlockAsync() {
     clearCurrentElems();
     let renderList = [];
     $("[lang='declarative']").each(function(index, codeblock) {
-        if ($(codeblock).parents().eq(5).css("display") == "none") {
-            return;
-        }
         const text = $(codeblock).find(":first-child").text();
         const data = JSON.parse(text);
         const suffix = 'rendercodeblock_' + index;
