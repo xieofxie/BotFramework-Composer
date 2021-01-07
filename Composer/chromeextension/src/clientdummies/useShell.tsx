@@ -25,6 +25,10 @@ export function useShell(source: EventSource, projectId: string, currentDialog: 
 
     async function focusSteps(subPaths: string[] = [], fragment?: string) {
         let dataPath: string = subPaths[0];
+        // TODO special case
+        if (dataPath.startsWith('..')) {
+            dataPath = dataPath.substr(2);
+        }
         setDesignPageLocation((old) => { return {
             ...old,
             focused: dataPath,

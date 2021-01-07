@@ -112,17 +112,23 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
             });
         }
 
-        const fSelected = formatSelected(selected);
-        setSelectValue(fSelected);
-
         if (renderData.triggers) {
+            const fSelected = formatSelected(selected);
+            setSelectValue(fSelected);
             setFocusedEvent((old) => { return {
                 ...old,
                 selected: fSelected,
                 focused: fSelected,
             };});
         } else {
-            setFocusedEvent((old) => { return { ...old, selected: '.' }; });
+            const fSelected = '.';
+            setSelectValue(fSelected);
+            const fFocused = 'actions[0]';
+            setFocusedEvent((old) => { return {
+                ...old,
+                selected: fSelected,
+                focused: fFocused
+            };});
         }
     }, []);
 
