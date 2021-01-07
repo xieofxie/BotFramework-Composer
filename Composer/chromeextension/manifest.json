@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "My chrome extension",
-  "version": "1.0.0",
+  "name": "Dialog Visualizer",
+  "version": "0.0.1",
   "permissions": ["tabs", "activeTab", "storage"],
   "content_scripts": [
     {
@@ -13,6 +13,9 @@
   "background": {
     "scripts": ["background.js"],
     "persistent": false
+  },
+  "icons": {
+    "128": "assets/icon.png"
   },
   "web_accessible_resources": ["assets/*"],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"

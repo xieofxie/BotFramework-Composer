@@ -8,7 +8,7 @@
     "build": "yarn run build:contentscript-background",
     "watch:contentscript-background": "cross-env NODE_ENV=development webpack --config webpack.config.js -w",
     "watch": "concurrently  \"npm:watch:contentscript-background\"",
-    "clean": "rimraf dist && cpy manifest.json dist && cpy src/assets/**/* dist/assets --parents",
+    "clean": "rimraf dist && cpy manifest.json dist && cd src/assets && cpy **/* ../../dist/assets --parents",
     "cpmonaco": "cpy ../node_modules/monaco-editor/min/vs/**/* dist/vs --parents",
     "prebuild": "yarn run clean",
     "prewatch": "yarn run clean"
@@ -41,6 +41,7 @@
     "json-source-map": "^0.6.1",
     "jsonpointer": "^4.1.0",
     "lodash": "^4.17.19",
+    "mutation-summary": "^0.1.1",
     "react-dom": "16.13.1",
     "react-split": "^2.0.9",
     "recoil": "^0.0.13"

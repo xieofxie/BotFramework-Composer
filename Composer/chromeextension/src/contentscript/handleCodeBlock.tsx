@@ -1,22 +1,21 @@
 import $ from 'jquery';
-
-import { configureShowHide, renderAsync } from './renderers';
-
+// @ts-ignore
 import MutationSummary from 'mutation-summary';
 import ReactDOM from 'react-dom';
 
-var currentButton = [];
-var currentDiv = [];
+import { configureShowHide, renderAsync } from './renderers';
 
-var setupWatch = function() {
-	var observer = new MutationSummary({
+let currentButton: JQuery<HTMLElement>[] = [];
+let currentDiv: JQuery<HTMLElement>[] = [];
+
+const setupWatch = function() {
+	const observer = new MutationSummary({
 		callback: async function(summaries) {
 			await renderCodeBlockAsync();
 		},
 		queries: [{ element: '[lang="declarative"]' }]
 	});
 };
-
 
 export async function handleCodeBlockAsync(){
     setupWatch();
@@ -31,7 +30,7 @@ async function renderCodeBlockAsync() {
         const data = JSON.parse(text);
         const suffix = 'rendercodeblock_' + index;
         const renderElem = configureShowHide($(codeblock), suffix);
-        renderList.push(renderAsync(data, renderElem.divElem, false, false));
+        renderList.push(renderAsync(data, renderElem.divElem, false, true));
         currentButton.push(renderElem.buttonElem);
         currentDiv.push(renderElem.divElem);
     });
