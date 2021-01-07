@@ -68,7 +68,7 @@ export const NodeLabel = ({ projectId, dialog, setSelectEle, setElements }: Node
               e.stopPropagation();
             }}
           />
-          Always
+          Pin
         </span>
         <span className={nodecontrol}>
           <a href={`/bot/${projectId}/dialogs/${dialog.id}`} target="_parent">

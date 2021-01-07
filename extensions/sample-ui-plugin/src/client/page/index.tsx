@@ -45,9 +45,9 @@ const edgeTypes = {
 
 const getLinkedDialogs = (parent: string, data: any, ids: Map<string, LinkDetail[]>) => {
   if (Array.isArray(data)) {
-    data.forEach((value) => {
-      if (!!!value.$designer) return;
-      getLinkedDialogs(parent + `["${value.$designer.id}"]`, value, ids);
+    data.forEach((value, index) => {
+      const identifier = !!value.$designer ? value.$designer.id : index;
+      getLinkedDialogs(parent + `["${identifier}"]`, value, ids);
     });
   } else if (typeof data === 'object') {
     if ('$kind' in data) {
@@ -282,7 +282,7 @@ const Main: React.FC = () => {
             </p>
             <p>
               <input type="checkbox" defaultChecked={showAll} onChange={setShowAllOnChange} />
-              Show All
+              Show All Dialogs
             </p>
             <button onClick={() => setDirectionOnClick('TB')}>Vertical layout</button>
             <button onClick={() => setDirectionOnClick('LR')}>Horizontal layout</button>

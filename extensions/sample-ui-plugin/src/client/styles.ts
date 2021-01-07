@@ -125,5 +125,5 @@ export const mininode = css`
 `;
 
 export const nodecontrol = css`
-  margin: 1px;
+  margin: 2px;
 `;

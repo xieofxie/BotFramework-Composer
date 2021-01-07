@@ -5,7 +5,7 @@ import { Colors } from '../styles';
 
 export const showAllState = atom({
   key: 'showAllState',
-  default: false,
+  default: true,
 });
 
 export const autoLayoutState = atom({
@@ -75,7 +75,7 @@ export const setSelectStyle = (elements: (Node | Edge)[], id: string) => {
       return e;
     }
     if (e.source === id || e.target == id) {
-      e.style = { stroke: Colors.gray0, strokeWidth: 2 };
+      e.style = { stroke: 'black', strokeWidth: 2 };
     } else {
       e.style = { stroke: Colors.gray1, strokeWidth: 1 };
     }
@@ -83,13 +83,13 @@ export const setSelectStyle = (elements: (Node | Edge)[], id: string) => {
   });
 };
 
-export const getLayoutedElements = (elements: (Node | Edge)[], direction: string, width: number, height: number) => {
+export const getLayoutedElements = (elements: (Node | Edge)[], direction: string, width: number, height: number, all: boolean = false) => {
   const isHorizontal = direction === 'LR';
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
   dagreGraph.setGraph({ rankdir: direction });
   elements.forEach((el) => {
-    if (el.isHidden) return;
+    if (!all && el.isHidden) return;
     if (isNode(el)) {
       dagreGraph.setNode(el.id, { width, height });
     } else {
@@ -98,7 +98,7 @@ export const getLayoutedElements = (elements: (Node | Edge)[], direction: string
   });
   dagre.layout(dagreGraph);
   return elements.map((el) => {
-    if (el.isHidden) return el;
+    if (!all && el.isHidden) return el;
     if (isNode(el)) {
       const nodeWithPosition = dagreGraph.node(el.id);
       el.targetPosition = isHorizontal ? Position.Left : Position.Top;
