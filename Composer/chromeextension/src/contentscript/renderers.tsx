@@ -5,20 +5,7 @@ import { RecoilRoot } from 'recoil';
 
 import TriggersRenderer from './TriggersRenderer';
 import { getSchemaAsync, getUiSchemaAsync } from '../utilities/schemas';
-
-function setButtonCss(buttonElem: JQuery<HTMLElement>){
-    buttonElem.css('display', 'inline-block');
-    buttonElem.css('color', 'white');
-    buttonElem.css('background-color', '#3362D5');
-    buttonElem.hover(function(){
-        $(this).css("background-color","#2C53B1");
-    },function(){
-        $(this).css("background-color","#3362D5");
-    });
-    buttonElem.css('user-select', 'none');
-    buttonElem.css('padding', '2px');
-    buttonElem.css('margin', '2px');
-}
+import { buttonStyle } from '../utilities/styles';
 
 // return new elem
 export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: string[], id: string, buttonAll: string = null){
@@ -32,7 +19,7 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
         // button
         const buttonId = `${thisId}_button`;
         buttonIds.push(buttonId);
-        buttonStr += `<div id=${buttonId}>${button}</div>`;
+        buttonStr += `<div class=${buttonStyle} id=${buttonId}>${button}</div>`;
         // div
         const divId = `${thisId}_div`;
         const divStr = `<div id=${divId}></div>`;
@@ -48,7 +35,7 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
     let buttonAllId = null;
     if (!!buttonAll) {
         buttonAllId = `${id}_button_all`;
-        buttonStr += `<div id=${buttonAllId}>${buttonAll}</div>`;
+        buttonStr += `<div class=${buttonStyle} id=${buttonAllId}>${buttonAll}</div>`;
     }
     buttonStr = `<div>${buttonStr}</div>`;
     originalElem.before(buttonStr);
@@ -66,7 +53,6 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
                 originalElem.show();
             }
         });
-        setButtonCss(buttonElem);
         res.push({divElem: divElems[index], buttonElem});
     });
     if (!!buttonAllId) {
@@ -88,7 +74,6 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
                 originalElem.show();
             }
         });
-        setButtonCss(buttonElem);
         res.push({divElem: null, buttonElem});
     }
     return res;
