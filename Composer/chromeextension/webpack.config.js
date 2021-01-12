@@ -1,21 +1,24 @@
 const { CheckerPlugin } = require('awesome-typescript-loader');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { optimize, DefinePlugin } = require('webpack');
+const { optimize, DefinePlugin, SourceMapDevToolPlugin } = require('webpack');
 const path = require('path');
 
-let prodPlugins = [];
+let plugins = [];
 if (process.env.NODE_ENV === 'production') {
-  prodPlugins.push(
+  plugins.push(
     new optimize.AggressiveMergingPlugin(),
-    // TODO
-    //new optimize.OccurrenceOrderPlugin()
+  );
+} else {
+  plugins.push(
+    // https://webpack.js.org/plugins/source-map-dev-tool-plugin/#basic-use-case
+    new SourceMapDevToolPlugin({}),
   );
 }
 module.exports = {
   // https://webpack.js.org/concepts/targets/
   target: 'web',
   mode: process.env.NODE_ENV,
-  devtool: 'inline-source-map',
+  devtool: false,
   entry: {
     contentscript: path.join(__dirname, 'src/contentscript/contentscript.tsx'),
     background: path.join(__dirname, 'src/background/background.ts'),
@@ -45,7 +48,7 @@ module.exports = {
   },
   plugins: [
     // new CheckerPlugin(),
-    ...prodPlugins,
+    ...plugins,
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css',
