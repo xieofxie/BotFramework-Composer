@@ -1,7 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "Dialog Visualizer",
-  "version": "0.0.1",
+  "name": "Adaptive Dialog Visualizer",
+  "description": "Visualize dialog files in Github",
+  "version": "0.1.0",
   "permissions": ["tabs", "activeTab", "storage"],
   "content_scripts": [
     {
