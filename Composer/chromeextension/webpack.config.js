@@ -14,6 +14,7 @@ if (process.env.NODE_ENV === 'production') {
     new SourceMapDevToolPlugin({}),
   );
 }
+
 module.exports = {
   // https://webpack.js.org/concepts/targets/
   target: 'web',
