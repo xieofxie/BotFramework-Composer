@@ -12,6 +12,7 @@ import { useShell } from '../clientdummies/useShell';
 import { VisualEditor } from '../clientdummies/VisualEditor';
 import { isTrigger } from '../utilities/schemas';
 import { mergeStatus, getGitColor } from '../utilities/status';
+import { dividerColor } from '../utilities/styles';
 
 export interface TriggersRendererProps {
     schemas: any;
@@ -19,6 +20,9 @@ export interface TriggersRendererProps {
     enableHide: boolean;
     enableProperty: boolean;
 }
+
+// TODO make it resizable
+const editorHeight = '80vh';
 
 const getGitStatus = (data: any) => {
     let status = null;
@@ -212,12 +216,12 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
                     return {
                         width: '10px',
                         float: 'left',
-                        height: '90vh',
+                        height: editorHeight,
                         marginLeft: '0px',
                         marginRight: '0px',
-                        backgroundColor: 'gray',
+                        backgroundColor: dividerColor,
                     }}}>
-                <div style={{ float: 'left', height: '90vh', position: 'relative' }}>
+                <div style={{ float: 'left', height: editorHeight, position: 'relative' }}>
                     {/*
 // @ts-ignore */}
                     <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForFlowEditor}>
@@ -230,7 +234,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
                     </EditorExtension>
                 </div>
                 {!enableProperty ||
-                    <div style={{ float: 'left', height: '90vh', overflow: 'scroll' }}>
+                    <div style={{ float: 'left', height: editorHeight, overflow: 'scroll' }}>
                         <EditorExtension plugins={pluginConfig} projectId={projectId} shell={shellForPropertyEditor}>
                             <PropertyEditor key={''} />
                         </EditorExtension>

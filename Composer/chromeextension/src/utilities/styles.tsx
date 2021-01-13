@@ -20,3 +20,5 @@ export const buttonStyle = css`
     margin: 1px;
     user-select: none;
 `;
+
+export const dividerColor = defaultTheme.semanticColors.menuDivider;
