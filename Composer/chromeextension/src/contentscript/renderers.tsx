@@ -6,6 +6,7 @@ import { RecoilRoot } from 'recoil';
 import TriggersRenderer from './TriggersRenderer';
 import { getSchemaAsync, getUiSchemaAsync } from '../utilities/schemas';
 import { buttonStyle } from '../utilities/styles';
+import { logInfo } from '../utilities/loggers';
 
 // return new elem
 export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: string[], id: string, buttonAll: string = null){
@@ -15,7 +16,7 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
     let buttonStr = '';
     buttons.forEach((button, index) => {
         const thisId = `${id}_${index}`;
-        console.error(`ConfigureShowHides: ${thisId}`);
+        logInfo(`ConfigureShowHides: ${thisId}`);
         // button
         const buttonId = `${thisId}_button`;
         buttonIds.push(buttonId);

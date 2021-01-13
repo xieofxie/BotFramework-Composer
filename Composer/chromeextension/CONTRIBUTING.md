@@ -12,11 +12,6 @@ yarn build
 
 ### Setup Packages
 
-```bash
-cd Composer/chromeextension
-yarn install
-```
-
 The following are workarounds for some misconfiguration of webpack, but I don't know how to fix:
 
 - Delete `Composer\node_modules\mutation-summary\src\mutation-summary.ts`
@@ -25,6 +20,7 @@ The following are workarounds for some misconfiguration of webpack, but I don't 
 ### Build and Install
 
 ```bash
+cd Composer/chromeextension
 yarn watch
 ```
 
