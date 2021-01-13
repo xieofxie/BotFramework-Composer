@@ -15,15 +15,15 @@ if (process.env.NODE_ENV === 'production') {
   );
 }
 
+const entry = {};
+entry[process.env.ENTRY] = path.join(__dirname, `src/${process.env.ENTRY}/${process.env.ENTRY}.tsx`);
+
 module.exports = {
   // https://webpack.js.org/concepts/targets/
   target: 'web',
   mode: process.env.NODE_ENV,
   devtool: false,
-  entry: {
-    contentscript: path.join(__dirname, 'src/contentscript/contentscript.tsx'),
-    background: path.join(__dirname, 'src/background/background.ts'),
-  },
+  entry: entry,
   output: {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js',
