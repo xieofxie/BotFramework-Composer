@@ -1,8 +1,10 @@
 import $ from 'jquery';
+import queryString from 'query-string';
 
 import { configureShowHides, renderAsync } from './renderers';
 import { simpleGet } from '../utilities/utilities';
 import parseJsonWithStatus, { LineStatus } from '../utilities/parseJsonWithStatus';
+import { logInfo } from '../utilities/loggers';
 
 const getStatus = (element: JQuery<HTMLElement>) => {
     if(element[0].classList.contains('blob-code-addition')){
@@ -14,6 +16,16 @@ const getStatus = (element: JQuery<HTMLElement>) => {
     }
 };
 
+const getCommits = ()=>{
+    const elem = $('div.js-socket-channel.js-updatable-content.js-pull-refresh-on-pjax').eq(0);
+    const url = elem.attr('data-url');
+    const parsed = queryString.parseUrl(url);
+    const newCommit = parsed.query['end_commit_oid'];
+    const baseCommit = parsed.query['base_commit_oid'];
+    logInfo(`${baseCommit} -> ${newCommit}`);
+    return [newCommit, baseCommit];
+};
+
 export async function handleDiffAsync(){
     const linkElems = $('a.btn-link[role="menuitem"][rel="nofollow"]');
     if (linkElems.length == 0) return;
@@ -21,10 +33,7 @@ export async function handleDiffAsync(){
     let baseUrls: string[] = [];
     let bodyElems: JQuery<HTMLElement>[] = [];
     // get commit
-    const newElem = $('input[name="commit_id"]').eq(0);
-    const newCommit = newElem.val();
-    const baseElem = newElem.parent().find('input[name="comparison_base_oid"]');
-    const baseCommit = baseElem.val();
+    const [newCommit, baseCommit] = getCommits();
     linkElems.each((index, value) => {
         const url = $(value).attr('href');
         if(!url.endsWith('.dialog')){
@@ -32,6 +41,7 @@ export async function handleDiffAsync(){
         }
         const rawurl = url.replace(/\/blob\//, '/raw/');
         urls.push(rawurl);
+        logInfo(rawurl);
         // TODO heavily rely on how github renders its page
         // const bodyElem = $(value).parents().eq(4).next().children().eq(0).children().eq(0);
         const bodyElem = $(value).parents().eq(5).find('table').eq(0);
@@ -39,6 +49,7 @@ export async function handleDiffAsync(){
         // base url
         const baseUrl = url.replace(`/blob/${newCommit}`, `/raw/${baseCommit}`);
         baseUrls.push(baseUrl);
+        logInfo(baseUrl);
     });
 
     const setStatus = (temp: JQuery<HTMLTableRowElement>, idIndex: number, statusIndex: number, otherStatusIndex: number, status: LineStatus[]) => {

@@ -49,6 +49,7 @@
     "jsonpointer": "^4.1.0",
     "lodash": "^4.17.19",
     "mutation-summary": "^0.1.1",
+    "query-string": "^6.13.8",
     "react-dom": "16.13.1",
     "react-split": "^2.0.9",
     "recoil": "^0.0.13"
