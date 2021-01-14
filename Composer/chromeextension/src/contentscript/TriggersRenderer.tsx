@@ -11,12 +11,13 @@ import { PropertyEditor } from '../clientdummies/PropertyEditor';
 import { useShell } from '../clientdummies/useShell';
 import { VisualEditor } from '../clientdummies/VisualEditor';
 import { isTrigger } from '../utilities/schemas';
-import { mergeStatus, getGitColor } from '../utilities/status';
+import { Status, mergeStatus, getGitColor } from '../utilities/status';
 import { dividerColor } from '../utilities/styles';
 
 export interface TriggersRendererProps {
     schemas: any;
     data?: any;
+    dataGetter?: ()=>Promise<any>;
     enableHide: boolean;
     enableProperty: boolean;
 }
@@ -24,8 +25,8 @@ export interface TriggersRendererProps {
 // TODO make it resizable
 const editorHeight = '80vh';
 
-const getGitStatus = (data: any) => {
-    let status = null;
+const getGitStatus = (data: any): Status => {
+    let status: Status = null;
     if (Array.isArray(data)) {
         data.forEach((value) => {
             status = mergeStatus(status, getGitStatus(value));
@@ -42,7 +43,7 @@ const getGitStatus = (data: any) => {
     return status;
 };
 
-const setTriggerGitStatus = (data: any) => {
+const setTriggerGitStatus = (data: any): void => {
     data?.triggers?.forEach((trigger) => {
         // TODO a combination of all or data
         let status = getGitStatus(trigger);
@@ -73,13 +74,14 @@ const renderOptions = (triggers: any[], hide: boolean) => {
     });
 };
 
-const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchemas, data, enableHide, enableProperty }) => {
+const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchemas, data: inputData, dataGetter, enableHide, enableProperty }) => {
     const projectId = 'dummyProjectId';
     const schemas = useRecoilValue(schemasState(projectId));
     const setSchemas = useSetRecoilState(schemasState(projectId));
     useEffect(() => {
         setSchemas(inputSchemas);
     }, []);
+    const [data, setData] = useState(inputData);
 
     const [hide, setHide] = useState(enableHide ? true : false);
     const [selectValue, setSelectValue] = useState('');
@@ -87,6 +89,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
     const setFocusedEvent = useSetRecoilState(designPageLocationState(projectId));
 
     const renderData = useMemo(() => {
+        if(!data) return null;
         if (enableHide) {
             setTriggerGitStatus(data);
         }
@@ -103,8 +106,17 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
         return data;
     }, [data, enableHide]);
 
+    useEffect(() => {
+        (async ()=>{
+            if (dataGetter) {
+                setData(await dataGetter());
+            }
+        })();
+    }, [dataGetter, setData]);
+
     // set default selected
     useEffect(() => {
+        if (!renderData) return;
         let selected = 0;
         if (enableHide) {
             renderData?.triggers?.every((trigger, index) => {
@@ -134,7 +146,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
                 focused: fFocused
             };});
         }
-    }, []);
+    }, [renderData]);
 
     const allOptions = useMemo(() => {
         return renderOptions(renderData?.triggers, false);
@@ -203,7 +215,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
         return mergePluginConfigs({ uiSchema: sdkUISchema }, plugins);
       }, [schemas?.ui?.content, schemas?.uiOverrides?.content]);
 
-    return (schemas==null?<div>Should use a Suspense..</div>:
+    return (renderData==null?<div>Should use a Suspense..</div>:
         <div>
             <div>
                 {enableHide ? <button onClick={() => { hideButtonOnClick() }}>Toggle Modified</button> : null}

@@ -9,11 +9,13 @@ export async function handleRawAsync(){
     const rawLinkElem = rawLinkElems.first();
     const url = rawLinkElem.attr('href');
     if(!url.endsWith('.dialog')) return;
-    return await simpleGet(url)
-    .then(async (text: string) => {
-        const data = JSON.parse(text);
-        const bodyElem = $('div.Box-body[itemprop="text"]').first();
-        const renderElem = configureShowHide(bodyElem, 'renderraw');
-        await renderAsync(data, renderElem.divElem, false, true);
+    const bodyElem = $('div.Box-body[itemprop="text"]').first();
+    const renderElem = configureShowHide(bodyElem, 'renderraw');
+    renderElem.buttonElem.on('click', async (event)=>{
+        // TODO bad check method
+        if(renderElem.divElem.children().length != 0) return;
+        await renderAsync(null, renderElem.divElem, false, true, async ()=>{
+            return JSON.parse(await simpleGet(url));
+        });
     });
 }

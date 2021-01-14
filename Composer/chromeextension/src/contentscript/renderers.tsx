@@ -8,9 +8,14 @@ import { getSchemaAsync, getUiSchemaAsync } from '../utilities/schemas';
 import { buttonStyle } from '../utilities/styles';
 import { logInfo } from '../utilities/loggers';
 
+export interface ShowHide {
+    divElem: JQuery<HTMLElement>;
+    buttonElem: JQuery<HTMLElement>;
+}
+
 // return new elem
-export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: string[], id: string, buttonAll: string = null){
-    const res = [];
+export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: string[], id: string, buttonAll: string = null): ShowHide[]{
+    const res: ShowHide[] = [];
     const divElems: JQuery<HTMLElement>[] = [];
     const buttonIds: string[] = [];
     let buttonStr = '';
@@ -80,18 +85,18 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
     return res;
 }
 
-export function configureShowHide(originalElem: JQuery<HTMLElement>, id: string){
+export function configureShowHide(originalElem: JQuery<HTMLElement>, id: string): ShowHide{
     return configureShowHides(originalElem, ['Toggle'], id)[0];
 }
 
-export async function renderAsync(data: any, rootElem, enableHide: boolean, enableProperty: boolean){
+export async function renderAsync(data: any, rootElem, enableHide: boolean, enableProperty: boolean, dataGetter: any = null){
     const schemas = {
         sdk: { content: await getSchemaAsync()},
         ui: { content: await getUiSchemaAsync()},
     };
     var elem =
         <RecoilRoot>
-            <TriggersRenderer schemas={schemas} data={data} enableHide={enableHide} enableProperty={enableProperty}></TriggersRenderer>
+            <TriggersRenderer schemas={schemas} data={data} dataGetter={dataGetter} enableHide={enableHide} enableProperty={enableProperty}></TriggersRenderer>
         </RecoilRoot>;
     ReactDOM.render(elem, rootElem[0]);
 }

@@ -24,6 +24,7 @@ export function useShell(source: EventSource, projectId: string, currentDialog: 
     const { dialogId, selected, focused, promptTab } = designPageLocation;
 
     async function focusSteps(subPaths: string[] = [], fragment?: string) {
+        if (subPaths.length == 0) return;
         let dataPath: string = subPaths[0];
         // TODO special case
         if (dataPath.startsWith('..')) {

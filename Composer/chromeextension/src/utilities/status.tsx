@@ -4,7 +4,7 @@ export enum Status{
     Both = 'both',
 }
 
-export function mergeStatus(s0: Status, s1: Status) {
+export function mergeStatus(s0: Status, s1: Status): Status {
     if (s0) {
         if (s1) {
             if (s0 == s1) {
