@@ -13,6 +13,10 @@ export interface ShowHide {
     buttonElem: JQuery<HTMLElement>;
 }
 
+const isShown = (elem: JQuery<HTMLElement>): boolean => {
+    return elem.css('display') != 'none';
+}
+
 // return new elem
 export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: string[], id: string, buttonAll: string = null): ShowHide[]{
     const res: ShowHide[] = [];
@@ -48,9 +52,19 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
     buttonIds.forEach((buttonId, index) => {
         const buttonElem = $(`div#${buttonId}`);
         buttonElem.on('click', (event) => {
-            const isHidden = divElems[index].css('display') == 'none';
+            let shown = isShown(divElems[index]);
+            if (shown) {
+                divElems.every((v, id)=>{
+                    if(id == index) return true;
+                    if(isShown(v)){
+                        shown = false;
+                        return false;
+                    }
+                    return true;
+                });
+            }
             divElems.forEach((r) => r.hide());
-            if (isHidden) {
+            if (!shown) {
                 divElems[index].css('float', 'none');
                 divElems[index].css('width', '100%');
                 divElems[index].show();
@@ -64,9 +78,16 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
     if (!!buttonAllId) {
         const buttonElem = $(`div#${buttonAllId}`);
         buttonElem.on('click', (event) => {
-            const isHidden = originalElem.css('display') != 'none';
+            let shown = true;
+            divElems.every((v)=>{
+                if(!isShown(v)){
+                    shown = false;
+                    return false;
+                }
+                return true;
+            });
             divElems.forEach((r) => {
-                if (isHidden) {
+                if (!shown) {
                     r.css('float', 'left');
                     r.css('width', `${100 / divElems.length}%`);
                     r.show();
@@ -74,7 +95,7 @@ export function configureShowHides(originalElem: JQuery<HTMLElement>, buttons: s
                     r.hide();
                 }
             });
-            if (isHidden) {
+            if (!shown) {
                 originalElem.hide();
             } else {
                 originalElem.show();
