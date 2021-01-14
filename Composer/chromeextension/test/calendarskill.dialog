@@ -232,7 +232,6 @@
           "$designer": {
             "id": "Ecgy1o"
           },
-          "gitStatus": "addition",
           "name": "calendarSkill.GetEventAttendees"
         },
         {
@@ -240,7 +239,6 @@
           "$designer": {
             "id": "1Met06"
           },
-          "gitStatus": "both",
           "assignments": [
             {
               "property": "dialog.query",
@@ -266,7 +264,6 @@
             "id": "hUatMN"
           },
           "activityProcessed": true,
-          "gitStatus": "deletion",
           "dialog": "AuthenticationDialog"
         },
         {
