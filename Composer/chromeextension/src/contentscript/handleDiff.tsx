@@ -6,6 +6,12 @@ import { simpleGet } from '../utilities/utilities';
 import parseJsonWithStatus, { LineStatus } from '../utilities/parseJsonWithStatus';
 import { logInfo } from '../utilities/loggers';
 
+const getDiffType = () => {
+    const elem = $('meta[name="diff-view"');
+    if (elem.length == 0) return null;
+    return elem.attr('content');
+}
+
 const getStatus = (element: JQuery<HTMLElement>) => {
     if(element[0].classList.contains('blob-code-addition')){
         return 'addition';
@@ -27,6 +33,8 @@ const getCommits = ()=>{
 };
 
 export async function handleDiffAsync(){
+    const diffType = getDiffType();
+    if (diffType == null) return;
     const linkElems = $('a.btn-link[role="menuitem"][rel="nofollow"]');
     if (linkElems.length == 0) return;
     let urls: string[] = [];
@@ -58,7 +66,7 @@ export async function handleDiffAsync(){
             const linenumber = parseInt(linenumbers) - 1;
             const thisStatus = getStatus(temp.eq(statusIndex));
             if (!!thisStatus) {
-                const otherStatus = getStatus(temp.eq(otherStatusIndex));
+                const otherStatus = otherStatusIndex == -1 ? null : getStatus(temp.eq(otherStatusIndex));
                 status.push({
                     status: otherStatus ? 'both' : thisStatus,
                     line: linenumber
@@ -73,9 +81,16 @@ export async function handleDiffAsync(){
         let baseStatus: LineStatus[] = [];
         bodyElems[index].find('tr').each((index, value) => {
             const temp = $(value).children();
-            if(temp.length == 4){
+            if (diffType == 'split' && temp.length == 4){
                 setStatus(temp, 0, 1, 3, baseStatus);
                 setStatus(temp, 2, 3, 1, status);
+            } else if (diffType == 'unified' && temp.length == 3){
+                // TODO note unified has different result with split
+                if(temp[0].classList.contains('empty-cell')) {
+                    setStatus(temp, 1, 2, -1, status);
+                }else{
+                    setStatus(temp, 0, 2, -1, baseStatus);
+                }
             }
         });
         // console.error(status);
