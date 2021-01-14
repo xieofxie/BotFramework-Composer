@@ -1,10 +1,16 @@
-export function mergeStatus(s0, s1) {
+export enum Status{
+    Addition = 'addition',
+    Deletion = 'deletion',
+    Both = 'both',
+}
+
+export function mergeStatus(s0: Status, s1: Status) {
     if (s0) {
         if (s1) {
             if (s0 == s1) {
                 return s0;
             } else {
-                return 'both';
+                return Status.Both;
             }
         } else {
             return s0;
@@ -15,12 +21,12 @@ export function mergeStatus(s0, s1) {
 }
 
 // Same as Composer\packages\adaptive-flow\src\adaptive-flow-renderer\widgets\ActionHeader\ActionHeader.tsx
-export const getGitColor = (gitStatus: string): string => {
-    if (gitStatus === 'deletion') {
+export const getGitColor = (gitStatus: Status): string => {
+    if (gitStatus === Status.Deletion) {
         return '#ffeef0';
-    } else if (gitStatus === 'addition') {
+    } else if (gitStatus === Status.Addition) {
         return '#e6ffed';
-    } else if (gitStatus === 'both') {
+    } else if (gitStatus === Status.Both) {
         return '#ffff00';
     }
     return '';

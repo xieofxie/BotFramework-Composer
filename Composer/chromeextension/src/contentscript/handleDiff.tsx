@@ -5,6 +5,7 @@ import { configureShowHides, renderAsync } from './renderers';
 import { simpleGet } from '../utilities/utilities';
 import parseJsonWithStatus, { LineStatus } from '../utilities/parseJsonWithStatus';
 import { logInfo } from '../utilities/loggers';
+import { Status } from '../utilities/status';
 
 const getDiffType = () => {
     const elem = $('meta[name="diff-view"');
@@ -12,11 +13,11 @@ const getDiffType = () => {
     return elem.attr('content');
 }
 
-const getStatus = (element: JQuery<HTMLElement>) => {
+const getStatus = (element: JQuery<HTMLElement>): Status => {
     if(element[0].classList.contains('blob-code-addition')){
-        return 'addition';
+        return Status.Addition;
     }else if(element[0].classList.contains('blob-code-deletion')){
-        return 'deletion';
+        return Status.Deletion;
     }else{
         return null;
     }
@@ -68,7 +69,7 @@ export async function handleDiffAsync(){
             if (!!thisStatus) {
                 const otherStatus = otherStatusIndex == -1 ? null : getStatus(temp.eq(otherStatusIndex));
                 status.push({
-                    status: otherStatus ? 'both' : thisStatus,
+                    status: otherStatus ? Status.Both : thisStatus,
                     line: linenumber
                 });
             }

@@ -1,10 +1,10 @@
 import jsonMap from 'json-source-map';
 import jsonpointer from 'jsonpointer';
 
-import { mergeStatus } from './status';
+import { Status, mergeStatus } from './status';
 
 export interface LineStatus {
-    status: 'addition' | 'deletion' | 'both';
+    status: Status;
     line: number;
 };
 
