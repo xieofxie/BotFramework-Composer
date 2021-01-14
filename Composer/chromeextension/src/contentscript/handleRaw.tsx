@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-import { configureShowHide, renderAsync } from './renderers';
+import { configureShowHide, setLazyLoading } from './renderers';
 import { simpleGet } from '../utilities/utilities';
 
 export async function handleRawAsync(){
@@ -11,11 +11,7 @@ export async function handleRawAsync(){
     if(!url.endsWith('.dialog')) return;
     const bodyElem = $('div.Box-body[itemprop="text"]').first();
     const renderElem = configureShowHide(bodyElem, 'renderraw');
-    renderElem.buttonElem.on('click', async (event)=>{
-        // TODO bad check method
-        if(renderElem.divElem.children().length != 0) return;
-        await renderAsync(null, renderElem.divElem, false, true, async ()=>{
-            return JSON.parse(await simpleGet(url));
-        });
+    setLazyLoading(renderElem, false, async ()=>{
+        return JSON.parse(await simpleGet(url));
     });
 }

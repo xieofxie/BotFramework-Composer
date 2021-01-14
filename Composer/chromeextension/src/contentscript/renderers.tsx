@@ -100,3 +100,11 @@ export async function renderAsync(data: any, rootElem, enableHide: boolean, enab
         </RecoilRoot>;
     ReactDOM.render(elem, rootElem[0]);
 }
+
+export function setLazyLoading(renderElem: ShowHide, enableHide: boolean, getter: ()=>Promise<void>){
+    renderElem.buttonElem.on('click', async (event)=>{
+        // TODO bad check method
+        if(renderElem.divElem.children().length != 0) return;
+        await renderAsync(null, renderElem.divElem, enableHide, true, getter);
+    });
+}
