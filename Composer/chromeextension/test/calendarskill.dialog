@@ -111,6 +111,10 @@
             "id": "AlS4sI"
           },
           "activity": "${SendActivity_AlS4sI()}"
+        },
+        {
+          "$kind": "Microsoft.SendActivity",
+          "activity": "New content"
         }
       ],
       "condition": "turn.recognized.score > 0.8"
@@ -136,13 +140,6 @@
             "id": "anTaur"
           },
           "connectionName": "=settings.oauthConnectionName"
-        },
-        {
-          "$kind": "Microsoft.SendActivity",
-          "$designer": {
-            "id": "IrC8MR"
-          },
-          "activity": "${SendActivity_IrC8MR()}"
         }
       ],
       "condition": "turn.recognized.score > 0.8"
@@ -165,7 +162,7 @@
         {
           "$kind": "Microsoft.SetProperties",
           "$designer": {
-            "id": "zgwt1E"
+            "id": "zgwt1E2"
           },
           "assignments": [
             {
