@@ -23,3 +23,8 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+
+Cypress.Commands.add("checkProperty", (label, title) => {
+    cy.get(`div[aria-label="${label}"]`).click();
+    cy.get(`input[aria-label="form title"][value="${title}"]`);
+});
