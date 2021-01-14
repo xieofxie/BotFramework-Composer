@@ -107,13 +107,6 @@
         },
         {
           "$kind": "Microsoft.SendActivity",
-          "$designer": {
-            "id": "AlS4sI"
-          },
-          "activity": "${SendActivity_AlS4sI()}"
-        },
-        {
-          "$kind": "Microsoft.SendActivity",
           "activity": "New content"
         }
       ],
@@ -133,6 +126,10 @@
             "id": "CmEecM"
           },
           "name": "calendarSkill.Logout"
+        },
+        {
+          "$kind": "Microsoft.TraceActivity",
+          "name": "calendarSkill.LogoutNew"
         },
         {
           "$kind": "Microsoft.SignOutUser",
@@ -162,7 +159,7 @@
         {
           "$kind": "Microsoft.SetProperties",
           "$designer": {
-            "id": "zgwt1E2"
+            "id": "zgwt1E"
           },
           "assignments": [
             {
