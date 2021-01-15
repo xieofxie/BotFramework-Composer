@@ -11,4 +11,10 @@ describe('property', () => {
     cy.get('select').select('triggers[1]');
     cy.checkProperty('CancelAllDialogs', 'Cancel all active dialogs');
   });
+
+  it('select custom', () => {
+    cy.get('select').select('triggers[2]');
+    cy.get(`div[aria-label="Custom.TraceActivity"]`).eq(0).click();
+    cy.get('pre#AdaptiveForm_FormData').contains('calendarSkill.custom');
+  });
 });

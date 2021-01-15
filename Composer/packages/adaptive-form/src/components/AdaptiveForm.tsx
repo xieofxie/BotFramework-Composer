@@ -78,5 +78,8 @@ export const AdaptiveForm: React.FC<AdaptiveFormProps> = function AdaptiveForm(p
       </ErrorBoundary>
     );
   }
+  if (formData) {
+    return <pre id="AdaptiveForm_FormData">{JSON.stringify(formData, null, 2)}</pre>;
+  }
   return null;
 };

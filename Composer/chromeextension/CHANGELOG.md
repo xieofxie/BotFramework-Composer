@@ -2,9 +2,13 @@
 
 ## Releases
 
+### 0.2.0 (TODO)
+
+- show custom schema as raw data
+
 ### 0.1.1
 
-- bug fix for first releaes
+- bug fix for first release
 
 ### 0.1.0
 
