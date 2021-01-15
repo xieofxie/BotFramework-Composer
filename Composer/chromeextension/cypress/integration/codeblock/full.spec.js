@@ -10,4 +10,11 @@ describe('full', () => {
     cy.get('select').select('triggers[1]');
     cy.get('div.trigger__content-label').contains('Intent recognized');
   });
+
+  it('property: select another', () => {
+    cy.checkProperty('CancelAllDialogs', 'Cancel all active dialogs');
+    // another
+    cy.get('select').select('triggers[0]');
+    cy.checkProperty('TraceActivity', 'Emit a trace event');
+  });
 });

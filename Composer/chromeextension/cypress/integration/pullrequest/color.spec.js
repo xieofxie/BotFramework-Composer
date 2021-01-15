@@ -7,8 +7,9 @@ describe('color', () => {
     cy.visit(
       'https://github.com/xieofxie/BotFramework-Composer/pull/19/files'
     );
+    cy.get('div#renderdiff_0_button_all', { timeout: 10000 }).click();
     // TODO work around for a correct get list
-    cy.get('div#renderdiff_0_button_all', { timeout: 10000 }).click().wait(5000);
+    cy.get(`div[aria-label="TraceActivity"]`).eq(2, { timeout: 5000 });
     cy.checkColor('TraceActivity', 2, Status.Addition);
     cy.get('select').eq(1).select('triggers[4]');
     cy.checkColor('SetProperties', 0, Status.Addition);

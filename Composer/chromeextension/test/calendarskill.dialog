@@ -106,6 +106,16 @@
           "name": "calendarSkill.Help"
         },
         {
+          "$kind": "Custom.TraceActivity",
+          "$designer": {
+            "id": "aYNWwl2"
+          },
+          "name": "calendarSkill.custom",
+          "data": {
+            "custom": 0
+          }
+        },
+        {
           "$kind": "Microsoft.SendActivity",
           "activity": "New content"
         }

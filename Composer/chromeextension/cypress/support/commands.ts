@@ -42,7 +42,7 @@ Cypress.Commands.add('checkColor', (label: string, index: number, status: Status
   // TODO handle CardNode
   let headerCy = cy.get(`div[aria-label="${label}"]`).eq(index).children().children();
   headerCy.then((header) => {
-    if(header[0].className.indexOf('ActionHeader') < 0){
+    if(header[0].className.indexOf('CardNode') >= 0){
       headerCy = headerCy.children().children();
     }
   })
