@@ -14,9 +14,9 @@ const Introduction: React.FC = () => {
   return (
     <>
       <p className="App-header">Adaptive Dialog Visualizer</p>
-      {Links.map((link) => {
+      {Links.map((link, index) => {
         return (
-          <p>
+          <p key={index}>
             <a href={link[1]} target="_blank" rel="noopener noreferrer">
               {link[0]}
             </a>

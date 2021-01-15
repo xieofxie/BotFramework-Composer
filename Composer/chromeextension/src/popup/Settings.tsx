@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-import { getSchemaUrlAsync, getUiSchemaUrlAsync, syncSchemas } from '../utilities/schemas';
+import { getSchemaUrlAsync, getUiSchemaUrlAsync, syncSchemas, getSchemaTimeAsync } from '../utilities/schemas';
+import { settingsLabelStyle, settingsInputStyle, settingsLIStyle } from '../utilities/styles';
+
+const getTimeString = async (): Promise<string> => {
+  const time = await getSchemaTimeAsync();
+  return time ? `Sync on ${time.toLocaleString()}` : `Sync on N/A`;
+}
 
 const Settings: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -15,17 +21,17 @@ const Settings: React.FC = () => {
 
   const resetOnClick = async () => {
     setValues({ schemaUrl: await getSchemaUrlAsync(), uiSchemaUrl: await getUiSchemaUrlAsync() });
+    setLog(await getTimeString());
   };
 
   const syncOnClick = async () => {
     await syncSchemas(values.schemaUrl, values.uiSchemaUrl);
-    setLog(`Sync on ${Date.now().toLocaleString()}`);
+    setLog(await getTimeString());
   };
 
   useEffect(() => {
     (async () => {
       await resetOnClick();
-      setLog('');
       setLoading(false);
     })();
   }, []);
@@ -34,23 +40,13 @@ const Settings: React.FC = () => {
     <>
       {loading || (
         <>
-          <p>
-            Schema Url
-            <input
-              value={values.schemaUrl}
-              onChange={(e) => {
-                set('schemaUrl');
-              }}
-            ></input>
+          <p className={settingsLIStyle}>
+            <label className={settingsLabelStyle}>Schema Url</label>
+            <input className={settingsInputStyle} value={values.schemaUrl} onChange={set('schemaUrl')}></input>
           </p>
-          <p>
-            UiSchema Url
-            <input
-              value={values.uiSchemaUrl}
-              onChange={(e) => {
-                set('uiSchemaUrl');
-              }}
-            ></input>
+          <p className={settingsLIStyle}>
+            <label className={settingsLabelStyle}>UiSchema Url</label>
+            <input className={settingsInputStyle} value={values.uiSchemaUrl} onChange={set('uiSchemaUrl')}></input>
           </p>
           <p>
             <button onClick={resetOnClick}>Reset</button>

@@ -7,8 +7,7 @@ const schemaUrlKey = 'schemaUrlKey';
 const uiSchemaUrlKey = 'uiSchemaUrlKey';
 const schemaKey = 'schemaKey';
 const uiSchemaKey = 'uiSchemaKey';
-
-// TODO not parallelizable
+const schemaTimeKey = 'schemaTimeKey';
 
 const schemaUrl = 'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/main/Composer/packages/server/schemas/sdk.schema';
 let schema: any = null;
@@ -16,38 +15,32 @@ let schema: any = null;
 const uiSchemaUrl = 'https://raw.githubusercontent.com/microsoft/BotFramework-Composer/main/Composer/packages/server/schemas/sdk.uischema';
 let uiSchema: any = null;
 
-export async function getSchemaAsync() : Promise<any> {
-    if (!schema) {
-        return await simpleGet(schemaUrl)
-        .then((text: string) => {
-            schema = JSON.parse(text);
-            return schema;
-        });
+let triggers: Set<string> = new Set<string>();
+
+export async function initSchemas(): Promise<void> {
+    const sch = await getLocal(schemaKey);
+    if (!sch) {
+        await syncSchemas();
+    } else {
+        schema = sch;
+        uiSchema = await getLocal(uiSchemaKey);
     }
+
+    const groups = [DialogGroup.EVENTS, DialogGroup.DIALOG_EVENT_TYPES, DialogGroup.ADVANCED_EVENTS, DialogGroup.RECOGNIZER];
+    groups.forEach((group) => {
+        dialogGroups[group].types.forEach((type) => triggers.add(type));
+    });
+};
+
+export async function getSchemaAsync() : Promise<any> {
     return schema;
 };
 
 export async function getUiSchemaAsync() : Promise<any> {
-    if (!uiSchema) {
-        return await simpleGet(uiSchemaUrl)
-        .then((text: string) => {
-            uiSchema = JSON.parse(text);
-            return uiSchema;
-        });
-    }
     return uiSchema;
 };
 
-let triggers: Set<string> = null;
-
 export function isTrigger(kind: string) : boolean {
-    if (!triggers) {
-        triggers = new Set<string>();
-        const groups = [DialogGroup.EVENTS, DialogGroup.DIALOG_EVENT_TYPES, DialogGroup.ADVANCED_EVENTS, DialogGroup.RECOGNIZER];
-        groups.forEach((group) => {
-            dialogGroups[group].types.forEach((type) => triggers.add(type));
-        });
-    }
     return triggers.has(kind);
 }
 
@@ -69,6 +62,10 @@ export async function getUiSchemaUrlAsync() : Promise<string> {
     return url;
 }
 
+export async function getSchemaTimeAsync() : Promise<Date> {
+    return new Date(await getLocal(schemaTimeKey));
+}
+
 export async function syncSchemas(schemaUrl: string = null, uiSchemaUrl: string = null): Promise<void> {
     const p = new Promise<string>(async (resolve, reject) => {
         if (schemaUrl) {
@@ -80,7 +77,8 @@ export async function syncSchemas(schemaUrl: string = null, uiSchemaUrl: string 
     }).then((url) => {
         return simpleGet(url);
     }).then((text) => {
-        return setLocal(schemaKey, JSON.parse(text));
+        schema = JSON.parse(text);
+        return setLocal(schemaKey, schema);
     });
 
     const pUi = new Promise<string>(async (resolve, reject) => {
@@ -93,8 +91,9 @@ export async function syncSchemas(schemaUrl: string = null, uiSchemaUrl: string 
     }).then((url) => {
         return simpleGet(url);
     }).then((text) => {
-        return setLocal(uiSchemaKey, JSON.parse(text));
+        uiSchema = JSON.parse(text);
+        return setLocal(uiSchemaKey, uiSchema);
     });
 
-    await Promise.all([p, pUi]);
+    await Promise.all([p, pUi, setLocal(schemaTimeKey, new Date().toJSON())]);
 }

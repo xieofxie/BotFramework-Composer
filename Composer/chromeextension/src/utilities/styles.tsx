@@ -22,3 +22,16 @@ export const buttonStyle = css`
 `;
 
 export const dividerColor = defaultTheme.semanticColors.menuDivider;
+
+export const settingsLabelStyle = css`
+    width: 25%;
+    display: inline-block;
+`;
+
+export const settingsInputStyle = css`
+    width: 70%;
+`;
+
+export const settingsLIStyle = css`
+    width: 100%;
+`;

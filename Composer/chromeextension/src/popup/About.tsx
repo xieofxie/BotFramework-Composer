@@ -7,9 +7,9 @@ const Links = [
 const About: React.FC = () => {
   return (
     <>
-      {Links.map((link) => {
+      {Links.map((link, index) => {
         return (
-          <p>
+          <p key={index}>
             <a href={link[1]} target="_blank" rel="noopener noreferrer">
               {link[0]}
             </a>
