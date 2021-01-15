@@ -215,7 +215,7 @@ const TriggersRenderer: React.FC<TriggersRendererProps> = ({ schemas: inputSchem
         return mergePluginConfigs({ uiSchema: sdkUISchema }, plugins);
       }, [schemas?.ui?.content, schemas?.uiOverrides?.content]);
 
-    return (renderData==null?<div>Should use a Suspense..</div>:
+    return ((schemas==null||renderData==null)?<div>Loading..</div>:
         <div>
             <div>
                 {enableHide ? <button onClick={() => { hideButtonOnClick() }}>Toggle Modified</button> : null}
