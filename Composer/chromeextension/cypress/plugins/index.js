@@ -24,6 +24,7 @@ module.exports = (on, config) => {
     const loader = extensionLoader.load({
       source: 'dist',
       skipHooks: true,
+      validBrowsers: ['chrome', 'edge'],
     });
 
     const args = await loader(browser, []);

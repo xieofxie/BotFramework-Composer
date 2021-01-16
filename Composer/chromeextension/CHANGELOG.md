@@ -5,6 +5,7 @@
 ### 0.2.0 (TODO)
 
 - show custom schema as raw data
+- store schemas to chrome.storage
 
 ### 0.1.1
 
