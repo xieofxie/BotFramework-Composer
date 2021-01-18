@@ -8,7 +8,7 @@ test('merge same', () => {
         const e = Status[s] as Status;
         expect(mergeStatus(e, e)).toEqual(e);
     }
-})
+});
 
 test('merge different', () => {
     for (let s in Status) {
@@ -19,4 +19,4 @@ test('merge different', () => {
             expect(mergeStatus(e, e2)).toEqual(Status.Both);
         }
     }
-})
+});
