@@ -5,8 +5,11 @@
   "license": "MIT",
   "scripts": {
     "build:content": "cross-env NODE_ENV=production ENTRY=contentscript webpack --config webpack.config.js",
+    "build:content:dev": "cross-env NODE_ENV=development ENTRY=contentscript webpack --config webpack.config.js",
     "build:background": "cross-env NODE_ENV=production ENTRY=background webpack --config webpack.config.js",
+    "build:background:dev": "cross-env NODE_ENV=development ENTRY=background webpack --config webpack.config.js",
     "build:popup": "cross-env NODE_ENV=production ENTRY=popup webpack --config webpack.config.js",
+    "build:popup:dev": "cross-env NODE_ENV=development ENTRY=popup webpack --config webpack.config.js",
     "build": "concurrently \"yarn:build:content\" \"yarn:build:background\" \"yarn:build:popup\"",
     "watch:content": "cross-env NODE_ENV=development ENTRY=contentscript webpack --config webpack.config.js -w",
     "watch:background": "cross-env NODE_ENV=development ENTRY=background webpack --config webpack.config.js -w",

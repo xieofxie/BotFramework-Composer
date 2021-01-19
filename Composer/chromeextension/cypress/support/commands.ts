@@ -31,7 +31,7 @@ export enum Status {
 }
 
 Cypress.Commands.add('checkProperty', (label: string, title: string) => {
-  cy.get(`div[aria-label="${label}"]`).click();
+  cy.get(`div[aria-label="${label}"][data-is-node="true"]`).eq(0).click();
   cy.get(`input[aria-label="form title"][value="${title}"]`);
 });
 
