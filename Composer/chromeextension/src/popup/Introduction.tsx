@@ -3,6 +3,7 @@ import React from 'react';
 import './App.scss';
 
 const Links = [
+  ['Documentation', 'https://github.com/xieofxie/BotFramework-Composer/tree/hualxie/extension/Composer/chromeextension/DOCUMENTATION.md'],
   ['Botframework Composer', 'https://github.com/microsoft/BotFramework-Composer'],
   [
     'Adaptive Dialog',
